@@ -1,4 +1,40 @@
 // ============================================================
+// ===== ONENESS BIBLE — app.js ===============================
+// ============================================================
+
+// ============================================================
+// ===== Lucide icon helper ===================================
+// ============================================================
+function refreshLucideIcons() {
+    if (window.lucide && typeof window.lucide.createIcons === 'function') {
+        window.lucide.createIcons();
+    }
+}
+
+// ============================================================
+// ===== Constants ============================================
+// ============================================================
+const APP_VERSION = '1.0';
+const SETTINGS_KEY = 'readerSettings';
+const ANNOTATIONS_KEY = 'annotations';
+const STATS_KEY = 'readingStats';
+
+const DEFAULT_SETTINGS = {
+    fontSize: 18,
+    fontFamily: 'serif',
+    lineHeight: 1.7,
+    contentWidth: 720,
+    startScreen: 'home'
+};
+
+const FONT_FAMILIES = {
+    serif: "Georgia, 'Times New Roman', serif",
+    sans: "'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif",
+    mono: "'Consolas', 'Monaco', monospace",
+    dyslexic: "'Comic Sans MS', 'Trebuchet MS', sans-serif"
+};
+
+// ============================================================
 // ===== Book registry ========================================
 // ============================================================
 const BOOKS = {
@@ -75,46 +111,73 @@ const BOOK_NAMES = Object.keys(BOOKS);
 // ============================================================
 // ===== DOM refs =============================================
 // ============================================================
-const bookSelect = document.getElementById('bookSelect');
-const chapterSelect = document.getElementById('chapterSelect');
-const reader = document.getElementById('reader');
-const prevBtn = document.getElementById('prevBtn');
-const nextBtn = document.getElementById('nextBtn');
-const themeBtn = document.getElementById('themeBtn');
-const bookmarksBtn = document.getElementById('bookmarksBtn');
-const settingsBtn = document.getElementById('settingsBtn');
+const $ = id => document.getElementById(id);
 
-const searchInput = document.getElementById('searchInput');
-const clearSearchBtn = document.getElementById('clearSearchBtn');
-const searchResults = document.getElementById('searchResults');
-const searchStatus = document.getElementById('searchStatus');
-const searchList = document.getElementById('searchResultsList');
-const closeSearchBtn = document.getElementById('closeSearchBtn');
+const homeScreen = $('home');
+const readerHeader = $('readerHeader');
+const readerMain = $('reader');
+const readerFooter = $('readerFooter');
 
-const verseToolbar = document.getElementById('verseToolbar');
-const vtBookmark = document.getElementById('vtBookmark');
-const vtCopy = document.getElementById('vtCopy');
-const vtLink = document.getElementById('vtLink');
-const vtClear = document.getElementById('vtClear');
-const vtClose = document.getElementById('vtClose');
+const votdText = $('votdText');
+const votdRef = $('votdRef');
+const votdReadBtn = $('votdReadBtn');
+const votdRefreshBtn = $('votdRefreshBtn');
+const continueTitle = $('continueTitle');
+const continueSub = $('continueSub');
+const continueBtn = $('continueBtn');
+const statBookmarks = $('statBookmarks');
+const statHighlights = $('statHighlights');
+const statStreak = $('statStreak');
+const startReadingBtn = $('startReadingBtn');
+const homeSearchBtn = $('homeSearchBtn');
+const homeAboutBtn = $('homeAboutBtn');
+const homeShareBtn = $('homeShareBtn');
+const homeInstallBtn = $('homeInstallBtn');
+
+const homeBtn = $('homeBtn');
+const bookmarksBtn = $('bookmarksBtn');
+const settingsBtn = $('settingsBtn');
+const themeBtn = $('themeBtn');
+
+const searchInput = $('searchInput');
+const clearSearchBtn = $('clearSearchBtn');
+const searchResults = $('searchResults');
+const searchStatus = $('searchStatus');
+const searchList = $('searchResultsList');
+const closeSearchBtn = $('closeSearchBtn');
+
+const verseToolbar = $('verseToolbar');
+const vtBookmark = $('vtBookmark');
+const vtCopy = $('vtCopy');
+const vtLink = $('vtLink');
+const vtClear = $('vtClear');
+const vtClose = $('vtClose');
 const vtColors = document.querySelectorAll('.vt-color');
 
-const bookmarksPanel = document.getElementById('bookmarksPanel');
-const bookmarksList = document.getElementById('bookmarksList');
-const closeBookmarksBtn = document.getElementById('closeBookmarksBtn');
+const bookmarksPanel = $('bookmarksPanel');
+const bookmarksList = $('bookmarksList');
+const closeBookmarksBtn = $('closeBookmarksBtn');
 
-const settingsPanel = document.getElementById('settingsPanel');
-const closeSettingsBtn = document.getElementById('closeSettingsBtn');
-const fontSizeRange = document.getElementById('fontSizeRange');
-const fontSizeVal = document.getElementById('fontSizeVal');
-const fontFamilySelect = document.getElementById('fontFamilySelect');
-const lineHeightRange = document.getElementById('lineHeightRange');
-const lineHeightVal = document.getElementById('lineHeightVal');
-const contentWidthRange = document.getElementById('contentWidthRange');
-const contentWidthVal = document.getElementById('contentWidthVal');
-const resetSettingsBtn = document.getElementById('resetSettingsBtn');
+const settingsPanel = $('settingsPanel');
+const closeSettingsBtn = $('closeSettingsBtn');
+const fontSizeRange = $('fontSizeRange');
+const fontSizeVal = $('fontSizeVal');
+const fontFamilySelect = $('fontFamilySelect');
+const lineHeightRange = $('lineHeightRange');
+const lineHeightVal = $('lineHeightVal');
+const contentWidthRange = $('contentWidthRange');
+const contentWidthVal = $('contentWidthVal');
+const startScreenSelect = $('startScreenSelect');
+const resetSettingsBtn = $('resetSettingsBtn');
 
-const toast = document.getElementById('toast');
+const aboutPanel = $('aboutPanel');
+const closeAboutBtn = $('closeAboutBtn');
+
+const installBanner = $('installBanner');
+const installAcceptBtn = $('installAcceptBtn');
+const installDismissBtn = $('installDismissBtn');
+
+const toast = $('toast');
 
 // ============================================================
 // ===== State ================================================
@@ -125,20 +188,19 @@ let currentChapter = parseInt(localStorage.getItem('chapter')) || 3;
 const bibleCache = {};
 let allBooksLoaded = false;
 
-let annotations = JSON.parse(localStorage.getItem('annotations') || '{}');
+let annotations = JSON.parse(localStorage.getItem(ANNOTATIONS_KEY) || '{}');
 
 let selectedVerseEl = null;
 let selectedVerseKey = null;
 
-// Reading settings
-const DEFAULT_SETTINGS = {
-    fontSize: 18,
-    fontFamily: 'serif',
-    lineHeight: 1.7,
-    contentWidth: 720
-};
+let settings = { ...DEFAULT_SETTINGS, ...JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}') };
 
-let settings = { ...DEFAULT_SETTINGS, ...JSON.parse(localStorage.getItem('readerSettings') || '{}') };
+let stats = JSON.parse(localStorage.getItem(STATS_KEY) || '{}');
+
+let votdList = [];
+let votdIndexOverride = null;
+
+let deferredInstallPrompt = null;
 
 // ============================================================
 // ===== Helpers ==============================================
@@ -148,7 +210,11 @@ function verseKey(book, chapter, verse) {
 }
 
 function saveAnnotations() {
-    localStorage.setItem('annotations', JSON.stringify(annotations));
+    localStorage.setItem(ANNOTATIONS_KEY, JSON.stringify(annotations));
+}
+
+function saveStats() {
+    localStorage.setItem(STATS_KEY, JSON.stringify(stats));
 }
 
 function escapeHtml(s) {
@@ -178,24 +244,140 @@ function showToast(msg, ms = 1800) {
 }
 
 // ============================================================
-// ===== Panel management (only one open at a time) ===========
+// ===== Panel management =====================================
 // ============================================================
 function closeAllPanels(except = null) {
     if (except !== 'bookmarks') bookmarksPanel.classList.add('hidden');
     if (except !== 'settings') settingsPanel.classList.add('hidden');
     if (except !== 'search') searchResults.classList.add('hidden');
+    if (except !== 'about') aboutPanel.classList.add('hidden');
 }
+
+// ============================================================
+// ===== Screen routing =======================================
+// ============================================================
+function showHome() {
+    homeScreen.classList.remove('hidden');
+    readerHeader.classList.add('hidden');
+    readerMain.classList.add('hidden');
+    readerFooter.classList.add('hidden');
+
+    closeAllPanels();
+    hideVerseToolbar();
+    deselectVerse();
+
+    updateHomeStats();
+    updateContinueCard();
+    renderVotd();
+    refreshLucideIcons();
+}
+
+function showReader() {
+    homeScreen.classList.add('hidden');
+    readerHeader.classList.remove('hidden');
+    readerMain.classList.remove('hidden');
+    readerFooter.classList.remove('hidden');
+    refreshLucideIcons();
+}
+
+// ============================================================
+// ===== Stats tracking =======================================
+// ============================================================
+function todayISO() {
+    return new Date().toISOString().slice(0, 10);
+}
+
+function updateStreakOnOpen() {
+    const today = todayISO();
+    const last = stats.lastOpenedDate;
+    if (last === today) return;
+
+    const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+    if (last === yesterday) {
+        stats.streak = (stats.streak || 0) + 1;
+    } else {
+        stats.streak = 1;
+    }
+    stats.lastOpenedDate = today;
+    saveStats();
+}
+
+function trackChapterRead(book, chapter) {
+    const key = `${book} ${chapter}`;
+    stats.chaptersRead = stats.chaptersRead || {};
+    stats.chaptersRead[key] = (stats.chaptersRead[key] || 0) + 1;
+    saveStats();
+}
+
+function updateHomeStats() {
+    const bookmarks = Object.values(annotations).filter(a => a.bookmarked).length;
+    const highlights = Object.values(annotations).filter(a => a.color).length;
+    statBookmarks.textContent = bookmarks;
+    statHighlights.textContent = highlights;
+    statStreak.textContent = stats.streak || 0;
+}
+
+function updateContinueCard() {
+    const book = localStorage.getItem('book') || 'John';
+    const chapter = localStorage.getItem('chapter') || '3';
+    continueTitle.textContent = `${book} ${chapter}`;
+    continueSub.textContent = 'Pick up where you left off';
+}
+
+// ============================================================
+// ===== Verse of the Day =====================================
+// ============================================================
+async function loadVotdList() {
+    if (votdList.length) return votdList;
+    try {
+        const res = await fetch('./votd.json');
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        votdList = await res.json();
+    } catch (err) {
+        console.warn('VOTD list not available:', err.message);
+        votdList = [];
+    }
+    return votdList;
+}
+
+function dayOfYear() {
+    const now = new Date();
+    const start = new Date(now.getFullYear(), 0, 0);
+    return Math.floor((now - start) / 86400000);
+}
+
+async function renderVotd() {
+    const list = await loadVotdList();
+
+    if (!list.length) {
+        votdText.textContent = '"The Lord is my shepherd; I shall not want."';
+        votdRef.textContent = '— Psalm 23:1 (KJV)';
+        return;
+    }
+
+    const idx = votdIndexOverride !== null
+        ? votdIndexOverride % list.length
+        : dayOfYear() % list.length;
+
+    const v = list[idx];
+    votdText.textContent = `"${v.text}"`;
+    votdRef.textContent = `— ${v.book} ${v.chapter}:${v.verse} (KJV)`;
+
+    votdReadBtn.onclick = () => {
+        jumpToVerse(v.book, v.chapter, v.verse);
+    };
+}
+
+votdRefreshBtn.addEventListener('click', () => {
+    const list = votdList;
+    if (!list.length) return;
+    votdIndexOverride = ((votdIndexOverride ?? dayOfYear()) + 1) % list.length;
+    renderVotd();
+});
 
 // ============================================================
 // ===== Reading settings =====================================
 // ============================================================
-const FONT_FAMILIES = {
-    serif: "Georgia, 'Times New Roman', serif",
-    sans: "'Segoe UI', system-ui, -apple-system, sans-serif",
-    mono: "'Consolas', 'Monaco', monospace",
-    dyslexic: "'Comic Sans MS', 'Trebuchet MS', sans-serif"
-};
-
 function applySettings() {
     const root = document.documentElement;
     root.style.setProperty('--reader-font-size', settings.fontSize + 'px');
@@ -211,8 +393,9 @@ function applySettings() {
     fontFamilySelect.value = settings.fontFamily;
     lineHeightRange.value = settings.lineHeight;
     contentWidthRange.value = settings.contentWidth;
+    startScreenSelect.value = settings.startScreen;
 
-    localStorage.setItem('readerSettings', JSON.stringify(settings));
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
 }
 
 fontSizeRange.addEventListener('input', e => {
@@ -231,19 +414,19 @@ contentWidthRange.addEventListener('input', e => {
     settings.contentWidth = parseInt(e.target.value);
     applySettings();
 });
+startScreenSelect.addEventListener('change', e => {
+    settings.startScreen = e.target.value;
+    applySettings();
+});
 resetSettingsBtn.addEventListener('click', () => {
     settings = { ...DEFAULT_SETTINGS };
     applySettings();
+    showToast('Settings reset');
 });
 
 // ============================================================
 // ===== URL hash routing =====================================
 // ============================================================
-// Format: #book-slug/chapter[/verse]
-//   #john/3
-//   #john/3/16
-//   #1-samuel/17/45
-
 function parseHash() {
     const hash = window.location.hash.replace(/^#/, '');
     if (!hash) return null;
@@ -274,6 +457,8 @@ async function handleHashChange() {
     const target = parseHash();
     if (!target) return;
 
+    showReader();
+
     currentBook = target.book;
     currentChapter = target.chapter;
     bookSelect.value = currentBook;
@@ -299,6 +484,11 @@ window.addEventListener('hashchange', handleHashChange);
 // ============================================================
 // ===== Book / chapter dropdowns =============================
 // ============================================================
+const bookSelect = document.getElementById('bookSelect');
+const chapterSelect = document.getElementById('chapterSelect');
+const prevBtn = document.getElementById('prevBtn');
+const nextBtn = document.getElementById('nextBtn');
+
 BOOK_NAMES.forEach(book => {
     const opt = document.createElement('option');
     opt.value = book;
@@ -321,14 +511,14 @@ function fillChapters(book) {
 // ===== Load a chapter =======================================
 // ============================================================
 async function loadChapter(book, chapter) {
-    reader.innerHTML = '<p class="loading">Loading…</p>';
+    readerMain.innerHTML = '<p class="loading">Loading…</p>';
     hideVerseToolbar();
     selectedVerseEl = null;
     selectedVerseKey = null;
 
     const file = BOOKS[book]?.file;
     if (!file) {
-        reader.innerHTML = '<p class="error">Unknown book.</p>';
+        readerMain.innerHTML = '<p class="error">Unknown book.</p>';
         return;
     }
 
@@ -343,7 +533,7 @@ async function loadChapter(book, chapter) {
 
         const verses = bookData[String(chapter)];
         if (!verses || verses.length === 0) {
-            reader.innerHTML = '<p class="error">No verses found.</p>';
+            readerMain.innerHTML = '<p class="error">No verses found.</p>';
             return;
         }
 
@@ -368,19 +558,20 @@ async function loadChapter(book, chapter) {
         `;
         }).join('')}
     `;
-        reader.innerHTML = html;
+        readerMain.innerHTML = html;
 
-        reader.querySelectorAll('.verse').forEach(el => {
+        readerMain.querySelectorAll('.verse').forEach(el => {
             el.addEventListener('click', onVerseClick);
         });
 
         localStorage.setItem('book', book);
         localStorage.setItem('chapter', chapter);
         updateHash(book, chapter);
+        trackChapterRead(book, chapter);
 
     } catch (err) {
         console.error(err);
-        reader.innerHTML = `<p class="error">Failed to load: ${err.message}</p>`;
+        readerMain.innerHTML = `<p class="error">Failed to load: ${err.message}</p>`;
     }
 }
 
@@ -435,8 +626,8 @@ nextBtn.addEventListener('click', goNext);
 themeBtn.addEventListener('click', () => {
     const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
     document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
-    themeBtn.textContent = isDark ? '🌙' : '☀️';
     localStorage.setItem('theme', isDark ? 'light' : 'dark');
+    refreshLucideIcons();
 });
 
 // ============================================================
@@ -451,7 +642,7 @@ function onVerseClick(e) {
 
 function selectVerse(el) {
     if (selectedVerseEl) selectedVerseEl.classList.remove('selected');
-    reader.querySelectorAll('.verse.selected').forEach(v => v.classList.remove('selected'));
+    readerMain.querySelectorAll('.verse.selected').forEach(v => v.classList.remove('selected'));
 
     selectedVerseEl = el;
     el.classList.add('selected');
@@ -501,7 +692,6 @@ function hideVerseToolbar() {
     verseToolbar.classList.add('hidden');
 }
 
-// Bookmark toggle
 vtBookmark.addEventListener('click', () => {
     if (!selectedVerseKey || !selectedVerseEl) return;
     const ann = annotations[selectedVerseKey] || {};
@@ -511,10 +701,9 @@ vtBookmark.addEventListener('click', () => {
     saveAnnotations();
     selectedVerseEl.classList.toggle('bookmarked', !!ann.bookmarked);
     vtBookmark.classList.toggle('active', !!ann.bookmarked);
-    showToast(ann.bookmarked ? '🔖 Bookmarked' : 'Bookmark removed');
+    showToast(ann.bookmarked ? 'Bookmarked' : 'Bookmark removed');
 });
 
-// Copy verse text
 vtCopy.addEventListener('click', async () => {
     if (!selectedVerseEl) return;
     const book = selectedVerseEl.dataset.book;
@@ -530,7 +719,7 @@ vtCopy.addEventListener('click', async () => {
 
     try {
         await navigator.clipboard.writeText(formatted);
-        showToast('✓ Copied verse');
+        showToast('Copied verse');
     } catch (err) {
         const ta = document.createElement('textarea');
         ta.value = formatted;
@@ -538,11 +727,10 @@ vtCopy.addEventListener('click', async () => {
         ta.select();
         document.execCommand('copy');
         document.body.removeChild(ta);
-        showToast('✓ Copied verse');
+        showToast('Copied verse');
     }
 });
 
-// Copy link to verse
 vtLink.addEventListener('click', async () => {
     if (!selectedVerseEl) return;
     const book = selectedVerseEl.dataset.book;
@@ -553,7 +741,7 @@ vtLink.addEventListener('click', async () => {
 
     try {
         await navigator.clipboard.writeText(url);
-        showToast('🔗 Link copied');
+        showToast('Link copied');
     } catch (err) {
         const ta = document.createElement('textarea');
         ta.value = url;
@@ -561,11 +749,10 @@ vtLink.addEventListener('click', async () => {
         ta.select();
         document.execCommand('copy');
         document.body.removeChild(ta);
-        showToast('🔗 Link copied');
+        showToast('Link copied');
     }
 });
 
-// Color dots
 vtColors.forEach(btn => {
     btn.addEventListener('click', () => {
         if (!selectedVerseKey || !selectedVerseEl) return;
@@ -588,10 +775,10 @@ vtColors.forEach(btn => {
         saveAnnotations();
 
         vtColors.forEach(b => b.classList.toggle('active', b.dataset.color === ann.color));
+        updateHomeStats();
     });
 });
 
-// Clear
 vtClear.addEventListener('click', () => {
     if (!selectedVerseKey || !selectedVerseEl) return;
     delete annotations[selectedVerseKey];
@@ -603,6 +790,7 @@ vtClear.addEventListener('click', () => {
     selectedVerseEl.classList.remove('bookmarked');
     vtBookmark.classList.remove('active');
     vtColors.forEach(b => b.classList.remove('active'));
+    updateHomeStats();
 });
 
 vtClose.addEventListener('click', deselectVerse);
@@ -632,7 +820,7 @@ function renderBookmarks() {
         .filter(Boolean);
 
     if (entries.length === 0) {
-        bookmarksList.innerHTML = '<p class="empty-state">No bookmarks yet.<br><br>Click any verse and tap 🔖 to save it.</p>';
+        bookmarksList.innerHTML = '<p class="empty-state">No bookmarks yet.<br><br>Click any verse and tap the bookmark icon to save it.</p>';
         return;
     }
 
@@ -652,7 +840,7 @@ function renderBookmarks() {
                 purple: 'rgba(156,39,176,0.15)'
             }[ann.color] || 'var(--card)')
             : 'var(--card)';
-        const colorBorder = ann.color ? 'var(--accent)' : 'transparent';
+        const colorBorder = ann.color ? 'var(--gold)' : 'transparent';
 
         return `
       <div class="bookmark-item"
@@ -682,15 +870,11 @@ function renderBookmarks() {
             saveAnnotations();
             renderBookmarks();
             loadChapter(currentBook, currentChapter);
+            updateHomeStats();
         });
     });
 }
 
-// ============================================================
-// ===== Panel open/close handlers ============================
-// ============================================================
-
-// Bookmarks
 bookmarksBtn.addEventListener('click', e => {
     e.stopPropagation();
     closeAllPanels('bookmarks');
@@ -698,33 +882,33 @@ bookmarksBtn.addEventListener('click', e => {
     bookmarksPanel.classList.remove('hidden');
 });
 
-closeBookmarksBtn.addEventListener('click', () => {
-    bookmarksPanel.classList.add('hidden');
-});
+closeBookmarksBtn.addEventListener('click', () => bookmarksPanel.classList.add('hidden'));
 
-// Settings
 settingsBtn.addEventListener('click', e => {
     e.stopPropagation();
     closeAllPanels('settings');
     settingsPanel.classList.remove('hidden');
 });
 
-closeSettingsBtn.addEventListener('click', () => {
-    settingsPanel.classList.add('hidden');
+closeSettingsBtn.addEventListener('click', () => settingsPanel.classList.add('hidden'));
+
+homeAboutBtn.addEventListener('click', () => {
+    closeAllPanels('about');
+    aboutPanel.classList.remove('hidden');
 });
 
-// Click outside any panel → close it
+closeAboutBtn.addEventListener('click', () => aboutPanel.classList.add('hidden'));
+
 document.addEventListener('click', e => {
     const insideBookmarks = bookmarksPanel.contains(e.target);
     const insideSettings = settingsPanel.contains(e.target);
     const insideSearch = searchResults.contains(e.target);
+    const insideAbout = aboutPanel.contains(e.target);
 
-    // If the click is inside a currently open panel, let it be
-    if (insideBookmarks || insideSettings || insideSearch) return;
-
-    // If the click is on the opener button, the button's own handler already ran
+    if (insideBookmarks || insideSettings || insideSearch || insideAbout) return;
     if (e.target.closest('#bookmarksBtn')) return;
     if (e.target.closest('#settingsBtn')) return;
+    if (e.target.closest('#homeAboutBtn')) return;
 
     closeAllPanels();
 });
@@ -820,6 +1004,8 @@ async function jumpToVerse(book, chapter, verse) {
     closeAllPanels();
     searchInput.value = '';
 
+    showReader();
+
     currentBook = book;
     currentChapter = chapter;
     bookSelect.value = book;
@@ -876,8 +1062,95 @@ clearSearchBtn.addEventListener('click', () => {
     searchInput.focus();
 });
 
-closeSearchBtn.addEventListener('click', () => {
-    searchResults.classList.add('hidden');
+closeSearchBtn.addEventListener('click', () => searchResults.classList.add('hidden'));
+
+// ============================================================
+// ===== Home actions =========================================
+// ============================================================
+homeBtn.addEventListener('click', () => {
+    showHome();
+    history.replaceState(null, '', window.location.pathname);
+});
+
+startReadingBtn.addEventListener('click', () => {
+    showReader();
+    loadChapter(currentBook, currentChapter);
+});
+
+continueBtn.addEventListener('click', () => {
+    showReader();
+    loadChapter(currentBook, currentChapter);
+});
+
+homeSearchBtn.addEventListener('click', () => {
+    showReader();
+    setTimeout(() => searchInput.focus(), 100);
+});
+
+homeShareBtn.addEventListener('click', async () => {
+    const url = `${window.location.origin}${window.location.pathname}`;
+    const shareData = {
+        title: 'Oneness Bible',
+        text: 'One with The Word — a beautiful, offline Bible reader.',
+        url
+    };
+
+    if (navigator.share) {
+        try {
+            await navigator.share(shareData);
+        } catch (err) {
+            if (err.name !== 'AbortError') console.warn(err);
+        }
+    } else {
+        try {
+            await navigator.clipboard.writeText(url);
+            showToast('Link copied');
+        } catch {
+            showToast('Share: ' + url);
+        }
+    }
+});
+
+// ============================================================
+// ===== Install prompt =======================================
+// ============================================================
+window.addEventListener('beforeinstallprompt', e => {
+    e.preventDefault();
+    deferredInstallPrompt = e;
+
+    const dismissed = localStorage.getItem('installDismissedAt');
+    const dayMs = 7 * 86400000;
+    if (dismissed && Date.now() - parseInt(dismissed) < dayMs) return;
+    if (window.matchMedia('(display-mode: standalone)').matches) return;
+
+    installBanner.classList.remove('hidden');
+});
+
+installAcceptBtn.addEventListener('click', async () => {
+    installBanner.classList.add('hidden');
+    if (!deferredInstallPrompt) {
+        showToast('Use Share → Add to Home Screen');
+        return;
+    }
+    deferredInstallPrompt.prompt();
+    const { outcome } = await deferredInstallPrompt.userChoice;
+    if (outcome === 'accepted') showToast('Installing…');
+    deferredInstallPrompt = null;
+});
+
+installDismissBtn.addEventListener('click', () => {
+    installBanner.classList.add('hidden');
+    localStorage.setItem('installDismissedAt', Date.now().toString());
+});
+
+homeInstallBtn.addEventListener('click', () => {
+    if (deferredInstallPrompt) {
+        installAcceptBtn.click();
+    } else if (window.matchMedia('(display-mode: standalone)').matches) {
+        showToast('Already installed');
+    } else {
+        showToast('Use Share → Add to Home Screen');
+    }
 });
 
 // ============================================================
@@ -886,35 +1159,28 @@ closeSearchBtn.addEventListener('click', () => {
 (async function init() {
     const savedTheme = localStorage.getItem('theme') || 'light';
     document.documentElement.setAttribute('data-theme', savedTheme);
-    themeBtn.textContent = savedTheme === 'dark' ? '☀️' : '🌙';
 
     applySettings();
+    updateStreakOnOpen();
 
     bookSelect.value = currentBook;
     fillChapters(currentBook);
     chapterSelect.value = currentChapter;
 
+    await loadVotdList();
+
     const fromHash = parseHash();
     if (fromHash) {
-        currentBook = fromHash.book;
-        currentChapter = fromHash.chapter;
-        bookSelect.value = currentBook;
-        fillChapters(currentBook);
-        chapterSelect.value = currentChapter;
+        await handleHashChange();
+    } else if (settings.startScreen === 'reader') {
+        showReader();
+        await loadChapter(currentBook, currentChapter);
+    } else {
+        showHome();
     }
 
-    await loadChapter(currentBook, currentChapter);
-
-    if (fromHash && fromHash.verse) {
-        const verseEl = document.querySelector(`#reader .verse[data-verse="${fromHash.verse}"]`);
-        if (verseEl) {
-            setTimeout(() => {
-                verseEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                verseEl.classList.add('highlight');
-                setTimeout(() => verseEl.classList.remove('highlight'), 2500);
-            }, 150);
-        }
-    }
+    updateHomeStats();
+    refreshLucideIcons();
 })();
 
 // ============================================================

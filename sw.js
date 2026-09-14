@@ -1,7 +1,8 @@
 // sw.js — Service Worker for offline Bible reading
-const CACHE = 'bible-kjv-v5';   // was v4
+const CACHE = 'bible-kjv-v9';   // was v
 
-// On install, cache the app shell + manifest + icons
+const LUCIDE_URL = 'https://unpkg.com/lucide@latest';
+
 self.addEventListener('install', event => {
     event.waitUntil(
         caches.open(CACHE).then(cache =>
@@ -11,6 +12,9 @@ self.addEventListener('install', event => {
                 './style.css',
                 './app.js',
                 './manifest.json',
+                './votd.json',
+                LUCIDE_URL,
+                './icons/logo.png',
                 './icons/icon-192.png',
                 './icons/icon-512.png',
                 './icons/favicon-32x32.png',
@@ -22,7 +26,6 @@ self.addEventListener('install', event => {
     self.skipWaiting();
 });
 
-// Clean old caches on activate
 self.addEventListener('activate', event => {
     event.waitUntil(
         caches.keys().then(keys =>
@@ -32,15 +35,10 @@ self.addEventListener('activate', event => {
     self.clients.claim();
 });
 
-// Fetch strategy:
-//   /data/*.json  → cache-first (Bible data)
-//   everything else → network-first with cache fallback
 self.addEventListener('fetch', event => {
     const url = new URL(event.request.url);
 
-    // Only handle same-origin requests
-    if (url.origin !== self.location.origin) return;
-
+    // Bible data — cache-first (immutable)
     if (url.pathname.includes('/data/')) {
         event.respondWith(
             caches.match(event.request).then(cached => {
@@ -57,6 +55,27 @@ self.addEventListener('fetch', event => {
         return;
     }
 
+    // Lucide CDN — cache-first
+    if (url.href === LUCIDE_URL || url.hostname === 'unpkg.com') {
+        event.respondWith(
+            caches.match(event.request).then(cached => {
+                if (cached) return cached;
+                return fetch(event.request).then(res => {
+                    if (res.ok) {
+                        const copy = res.clone();
+                        caches.open(CACHE).then(cache => cache.put(event.request, copy));
+                    }
+                    return res;
+                });
+            })
+        );
+        return;
+    }
+
+    // Only handle same-origin for everything else
+    if (url.origin !== self.location.origin) return;
+
+    // Network-first with cache fallback
     event.respondWith(
         fetch(event.request)
             .then(res => {

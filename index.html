@@ -4,66 +4,202 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bible Reader</title>
+    <title>Oneness Bible — One with The Word</title>
+    <meta name="description" content="Read the King James Version Bible offline. Beautiful, distraction-free, private.">
 
     <!-- PWA -->
     <link rel="manifest" href="./manifest.json">
-    <meta name="theme-color" content="#6b4423">
+    <meta name="theme-color" content="#1a3a7a">
     <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
     <link rel="icon" type="image/png" sizes="32x32" href="./icons/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="./icons/favicon-16x16.png">
     <link rel="apple-touch-icon" sizes="180x180" href="./icons/apple-touch-icon.png">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="Bible">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Oneness Bible">
 
     <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
-    <header>
-        <h1>📖 Bible Reader</h1>
 
-        <!-- Search bar -->
+    <!-- ============================================================
+       HOME SCREEN
+       ============================================================ -->
+    <div id="home">
+        <div class="home-container">
+
+            <div class="home-hero">
+                <img src="./icons/logo.png" alt="Oneness Bible" class="home-logo">
+                <h1 class="home-title">Oneness <span class="bible">BIBLE</span></h1>
+                <p class="home-tagline">One with The Word</p>
+            </div>
+
+            <!-- Verse of the Day -->
+            <div class="home-card" id="votdCard">
+                <div class="card-label">
+                    <i data-lucide="sparkles"></i>
+                    <span>Verse of the Day</span>
+                </div>
+                <p class="votd-text" id="votdText">Loading…</p>
+                <p class="votd-ref" id="votdRef">—</p>
+                <div class="votd-actions">
+                    <button type="button" id="votdReadBtn" class="btn-secondary">Read in context</button>
+                    <button type="button" id="votdRefreshBtn" class="btn-secondary">
+                        <i data-lucide="sparkles"></i>
+                        <span>Another</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Continue Reading -->
+            <div class="home-card" id="continueCard">
+                <div class="card-label">
+                    <i data-lucide="book-open"></i>
+                    <span>Continue Reading</span>
+                </div>
+                <div class="continue-title" id="continueTitle">John 3</div>
+                <div class="continue-sub" id="continueSub">Pick up where you left off</div>
+                <button type="button" id="continueBtn" class="btn-primary home-full-btn">
+                    <span>Continue</span>
+                    <i data-lucide="chevron-right"></i>
+                </button>
+            </div>
+
+            <!-- Stats -->
+            <div class="home-card" id="statsCard">
+                <div class="card-label">
+                    <i data-lucide="bar-chart-3"></i>
+                    <span>Your Reading</span>
+                </div>
+                <div class="stats-grid">
+                    <div class="stat">
+                        <div class="stat-value" id="statBookmarks">0</div>
+                        <div class="stat-label">Bookmarks</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value" id="statHighlights">0</div>
+                        <div class="stat-label">Highlights</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value" id="statStreak">0</div>
+                        <div class="stat-label">Day Streak</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Primary actions -->
+            <div class="home-actions">
+                <button type="button" id="startReadingBtn" class="btn-primary">
+                    <i data-lucide="book-open"></i>
+                    <span>Start Reading</span>
+                </button>
+                <button type="button" id="homeSearchBtn" class="btn-secondary">
+                    <i data-lucide="search"></i>
+                    <span>Search the Bible</span>
+                </button>
+            </div>
+
+            <!-- Footer -->
+            <div class="home-footer">
+                <div class="home-footer-links">
+                    <button type="button" id="homeAboutBtn">
+                        <i data-lucide="info"></i>
+                        <span>About</span>
+                    </button>
+                    <button type="button" id="homeShareBtn">
+                        <i data-lucide="share-2"></i>
+                        <span>Share</span>
+                    </button>
+                    <button type="button" id="homeInstallBtn">
+                        <i data-lucide="download"></i>
+                        <span>Install App</span>
+                    </button>
+                </div>
+                <div class="home-version">Oneness Bible · v1.0</div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ============================================================
+       READER
+       ============================================================ -->
+    <header id="readerHeader" class="hidden">
+        <div class="header-top">
+            <button type="button" class="brand-link" id="homeBtn" title="Back to home">
+                <img src="./icons/logo.png" alt="" class="brand-logo">
+                <span class="brand-name">Oneness <span class="bible">BIBLE</span></span>
+            </button>
+            <div class="header-spacer"></div>
+            <button type="button" class="icon-btn" id="bookmarksBtn" title="Bookmarks" aria-label="Bookmarks">
+                <i data-lucide="bookmark"></i>
+            </button>
+            <button type="button" class="icon-btn" id="settingsBtn" title="Settings" aria-label="Settings">
+                <i data-lucide="settings"></i>
+            </button>
+            <button type="button" class="icon-btn" id="themeBtn" title="Toggle theme" aria-label="Toggle theme">
+                <i data-lucide="moon" class="icon-moon"></i>
+                <i data-lucide="sun" class="icon-sun"></i>
+            </button>
+        </div>
+
         <div class="search-bar">
             <input type="search" id="searchInput" placeholder="Search the Bible… (e.g. love, grace, born again)"
                 autocomplete="off">
-            <button id="clearSearchBtn" title="Clear" type="button">✕</button>
+            <button id="clearSearchBtn" title="Clear" type="button" aria-label="Clear search">
+                <i data-lucide="x"></i>
+            </button>
         </div>
 
         <nav class="controls">
             <select id="bookSelect"></select>
             <select id="chapterSelect"></select>
-            <button id="prevBtn" type="button">← Prev</button>
-            <button id="nextBtn" type="button">Next →</button>
-            <button id="bookmarksBtn" type="button" title="Bookmarks">🔖</button>
-            <button id="settingsBtn" type="button" title="Reading settings">⚙</button>
-            <button id="themeBtn" type="button">🌙</button>
+            <button id="prevBtn" type="button">
+                <i data-lucide="chevron-left"></i>
+                <span>Prev</span>
+            </button>
+            <button id="nextBtn" type="button">
+                <span>Next</span>
+                <i data-lucide="chevron-right"></i>
+            </button>
         </nav>
     </header>
 
-    <main id="reader">
+    <main id="reader" class="hidden">
         <p class="loading">Loading…</p>
     </main>
 
-    <footer>
-        <p>King James Version (Public Domain)</p>
+    <footer class="app-footer hidden" id="readerFooter">
+        <p>King James Version · Public Domain</p>
     </footer>
 
-    <!-- Search results overlay -->
+    <!-- ============================================================
+       OVERLAYS & PANELS
+       ============================================================ -->
+
     <div id="searchResults" class="search-results hidden">
         <div class="search-results-header">
             <span id="searchStatus">Search</span>
-            <button id="closeSearchBtn" type="button">✕ Close</button>
+            <button id="closeSearchBtn" type="button">
+                <i data-lucide="x"></i>
+                <span>Close</span>
+            </button>
         </div>
         <div id="searchResultsList"></div>
     </div>
 
-    <!-- Floating verse toolbar -->
     <div id="verseToolbar" class="verse-toolbar hidden">
-        <button class="vt-btn" id="vtBookmark" title="Bookmark" type="button">🔖</button>
-        <button class="vt-btn" id="vtCopy" title="Copy verse" type="button">📋</button>
-        <button class="vt-btn" id="vtLink" title="Copy link to verse" type="button">🔗</button>
+        <button class="vt-btn" id="vtBookmark" title="Bookmark" type="button" aria-label="Bookmark">
+            <i data-lucide="bookmark"></i>
+        </button>
+        <button class="vt-btn" id="vtCopy" title="Copy verse" type="button" aria-label="Copy verse">
+            <i data-lucide="copy"></i>
+        </button>
+        <button class="vt-btn" id="vtLink" title="Copy link" type="button" aria-label="Copy link">
+            <i data-lucide="link"></i>
+        </button>
         <span class="vt-divider"></span>
         <button class="vt-color" data-color="yellow" title="Yellow" type="button"></button>
         <button class="vt-color" data-color="green" title="Green" type="button"></button>
@@ -71,24 +207,38 @@
         <button class="vt-color" data-color="pink" title="Pink" type="button"></button>
         <button class="vt-color" data-color="purple" title="Purple" type="button"></button>
         <span class="vt-divider"></span>
-        <button class="vt-btn" id="vtClear" title="Clear" type="button">✕</button>
-        <button class="vt-btn" id="vtClose" title="Close" type="button">×</button>
+        <button class="vt-btn" id="vtClear" title="Clear" type="button" aria-label="Clear">
+            <i data-lucide="eraser"></i>
+        </button>
+        <button class="vt-btn" id="vtClose" title="Close" type="button" aria-label="Close">
+            <i data-lucide="x"></i>
+        </button>
     </div>
 
-    <!-- Bookmarks panel -->
     <div id="bookmarksPanel" class="bookmarks-panel hidden">
         <div class="bookmarks-header">
-            <span>🔖 Bookmarks</span>
-            <button id="closeBookmarksBtn" type="button">✕ Close</button>
+            <span>
+                <i data-lucide="bookmark"></i>
+                <span>Bookmarks</span>
+            </span>
+            <button id="closeBookmarksBtn" type="button">
+                <i data-lucide="x"></i>
+                <span>Close</span>
+            </button>
         </div>
         <div id="bookmarksList"></div>
     </div>
 
-    <!-- Settings panel -->
     <div id="settingsPanel" class="settings-panel hidden">
         <div class="settings-header">
-            <span>⚙ Reading Settings</span>
-            <button id="closeSettingsBtn" type="button">✕ Close</button>
+            <span>
+                <i data-lucide="settings"></i>
+                <span>Reading Settings</span>
+            </span>
+            <button id="closeSettingsBtn" type="button">
+                <i data-lucide="x"></i>
+                <span>Close</span>
+            </button>
         </div>
 
         <div class="settings-body">
@@ -117,13 +267,81 @@
                 <input type="range" id="contentWidthRange" min="560" max="920" step="20">
             </label>
 
+            <label class="setting">
+                <span>Start on</span>
+                <select id="startScreenSelect">
+                    <option value="home">Home screen</option>
+                    <option value="reader">Last read chapter</option>
+                </select>
+            </label>
+
             <button id="resetSettingsBtn" class="reset-btn" type="button">Reset to defaults</button>
         </div>
     </div>
 
-    <!-- Toast notification -->
+    <div id="aboutPanel" class="about-panel hidden">
+        <div class="about-header">
+            <span>
+                <i data-lucide="info"></i>
+                <span>About</span>
+            </span>
+            <button id="closeAboutBtn" type="button">
+                <i data-lucide="x"></i>
+                <span>Close</span>
+            </button>
+        </div>
+
+        <div class="about-body">
+            <img src="./icons/logo.png" alt="Oneness Bible" class="about-logo">
+            <div class="about-title">Oneness <span class="bible">BIBLE</span></div>
+            <div class="about-tagline">One with The Word</div>
+
+            <div class="about-section">
+                <h3>About</h3>
+                <p>Oneness Bible is a distraction-free Bible reading app built with HTML, CSS, and JavaScript only — no
+                    frameworks, no tracking, no accounts.</p>
+            </div>
+
+            <div class="about-section">
+                <h3>Scripture</h3>
+                <p>King James Version (KJV) · Public Domain</p>
+            </div>
+
+            <div class="about-section">
+                <h3>Privacy</h3>
+                <p>Everything you do — bookmarks, highlights, notes, reading position — stays on your device. Nothing is
+                    ever sent to a server.</p>
+            </div>
+
+            <div class="about-section">
+                <h3>Works Offline</h3>
+                <p>Once chapters are cached, you can read without an internet connection — perfect for flights,
+                    commutes, or quiet time.</p>
+            </div>
+
+            <div class="about-section">
+                <h3>Version</h3>
+                <p>v1.0 · <a href="https://github.com/iamSalvation/bible-site" target="_blank" rel="noopener">View on
+                        GitHub</a></p>
+            </div>
+        </div>
+    </div>
+
+    <div id="installBanner" class="install-banner hidden">
+        <img src="./icons/logo.png" alt="" class="install-banner-logo">
+        <div class="install-banner-text">
+            <strong>Install Oneness Bible</strong>
+            Read offline, any time.
+        </div>
+        <div class="install-banner-actions">
+            <button type="button" class="btn-install" id="installAcceptBtn">Install</button>
+            <button type="button" class="btn-dismiss" id="installDismissBtn">Later</button>
+        </div>
+    </div>
+
     <div id="toast" class="toast hidden"></div>
 
+    <script src="https://unpkg.com/lucide@latest"></script>
     <script src="app.js"></script>
 </body>
 
