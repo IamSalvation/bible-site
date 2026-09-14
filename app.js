@@ -1184,12 +1184,27 @@ homeInstallBtn.addEventListener('click', () => {
 })();
 
 // ============================================================
-// ===== Service worker =======================================
+// ===== Service worker (register immediately) ================
 // ============================================================
+// Register as early as possible so PWABuilder / install prompts
+// detect the service worker on the very first load.
 if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js')
-            .then(() => console.log('✅ SW registered'))
-            .catch(err => console.error('SW registration failed:', err));
-    });
+    navigator.serviceWorker.register('./sw.js', { scope: './' })
+        .then(reg => {
+            console.log('✅ SW registered, scope:', reg.scope);
+
+            // Force activation if a new SW is waiting
+            if (reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+
+            reg.addEventListener('updatefound', () => {
+                const newWorker = reg.installing;
+                if (!newWorker) return;
+                newWorker.addEventListener('statechange', () => {
+                    if (newWorker.state === 'activated') {
+                        console.log('✅ New SW activated');
+                    }
+                });
+            });
+        })
+        .catch(err => console.error('SW registration failed:', err));
 }

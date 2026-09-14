@@ -92,3 +92,12 @@ self.addEventListener('fetch', event => {
             .catch(() => caches.match(event.request))
     );
 });
+
+// ============================================================
+// ===== Message handler (SKIP_WAITING for updates) ==========
+// ============================================================
+self.addEventListener('message', event => {
+    if (event.data && event.data.type === 'SKIP_WAITING') {
+        self.skipWaiting();
+    }
+});
