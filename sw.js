@@ -1,5 +1,5 @@
 // sw.js — Service Worker for offline Bible reading
-const CACHE = 'bible-kjv-v9';
+const CACHE = 'bible-kjv-v10';
 
 const LUCIDE_URL = 'https://unpkg.com/lucide@latest';
 
@@ -13,7 +13,6 @@ self.addEventListener('install', event => {
                 './app.js',
                 './manifest.json',
                 './votd.json',
-                LUCIDE_URL,
                 './icons/logo.png',
                 './icons/icon-192.png',
                 './icons/icon-512.png',
@@ -24,6 +23,8 @@ self.addEventListener('install', event => {
                 './icons/apple-touch-icon.png',
                 './screenshots/home.png',
                 './screenshots/reader.png'
+                // NOTE: Lucide CDN is NOT precached here on purpose.
+                // It is cached lazily by the fetch handler below.
             ])
         )
     );
@@ -59,7 +60,7 @@ self.addEventListener('fetch', event => {
         return;
     }
 
-    // Lucide CDN — cache-first
+    // Lucide CDN — cache-first (lazy; not precached)
     if (url.href === LUCIDE_URL || url.hostname === 'unpkg.com') {
         event.respondWith(
             caches.match(event.request).then(cached => {

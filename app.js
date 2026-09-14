@@ -1184,27 +1184,11 @@ homeInstallBtn.addEventListener('click', () => {
 })();
 
 // ============================================================
-// ===== Service worker (register immediately) ================
+// ===== Service Worker: listen for controller takeover =======
+// (Registration now lives in index.html)
 // ============================================================
-// Register as early as possible so PWABuilder / install prompts
-// detect the service worker on the very first load.
 if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./sw.js', { scope: './' })
-        .then(reg => {
-            console.log('✅ SW registered, scope:', reg.scope);
-
-            // Force activation if a new SW is waiting
-            if (reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' });
-
-            reg.addEventListener('updatefound', () => {
-                const newWorker = reg.installing;
-                if (!newWorker) return;
-                newWorker.addEventListener('statechange', () => {
-                    if (newWorker.state === 'activated') {
-                        console.log('✅ New SW activated');
-                    }
-                });
-            });
-        })
-        .catch(err => console.error('SW registration failed:', err));
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+        console.log('✅ SW now controlling the page');
+    });
 }

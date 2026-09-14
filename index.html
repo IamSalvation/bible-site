@@ -341,6 +341,23 @@
 
     <div id="toast" class="toast hidden"></div>
 
+    <!-- ============================================================
+       SERVICE WORKER REGISTRATION
+       Registered here (not in app.js) so PWABuilder's scanner
+       detects it immediately on page load.
+       ============================================================ -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker
+                .register('/bible-site/sw.js', { scope: '/bible-site/' })
+                .then(reg => {
+                    console.log('✅ SW registered, scope:', reg.scope);
+                    if (reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+                })
+                .catch(err => console.error('❌ SW registration failed:', err));
+        }
+    </script>
+
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="app.js"></script>
 </body>
