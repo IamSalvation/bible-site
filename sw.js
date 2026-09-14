@@ -1,5 +1,5 @@
 // sw.js — Service Worker for offline Bible reading
-const CACHE = 'bible-kjv-v4';   // was v3
+const CACHE = 'bible-kjv-v5';   // was v4
 
 // On install, cache the app shell + manifest + icons
 self.addEventListener('install', event => {

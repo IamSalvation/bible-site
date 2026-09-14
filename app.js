@@ -82,6 +82,7 @@ const prevBtn = document.getElementById('prevBtn');
 const nextBtn = document.getElementById('nextBtn');
 const themeBtn = document.getElementById('themeBtn');
 const bookmarksBtn = document.getElementById('bookmarksBtn');
+const settingsBtn = document.getElementById('settingsBtn');
 
 const searchInput = document.getElementById('searchInput');
 const clearSearchBtn = document.getElementById('clearSearchBtn');
@@ -92,6 +93,8 @@ const closeSearchBtn = document.getElementById('closeSearchBtn');
 
 const verseToolbar = document.getElementById('verseToolbar');
 const vtBookmark = document.getElementById('vtBookmark');
+const vtCopy = document.getElementById('vtCopy');
+const vtLink = document.getElementById('vtLink');
 const vtClear = document.getElementById('vtClear');
 const vtClose = document.getElementById('vtClose');
 const vtColors = document.querySelectorAll('.vt-color');
@@ -99,6 +102,19 @@ const vtColors = document.querySelectorAll('.vt-color');
 const bookmarksPanel = document.getElementById('bookmarksPanel');
 const bookmarksList = document.getElementById('bookmarksList');
 const closeBookmarksBtn = document.getElementById('closeBookmarksBtn');
+
+const settingsPanel = document.getElementById('settingsPanel');
+const closeSettingsBtn = document.getElementById('closeSettingsBtn');
+const fontSizeRange = document.getElementById('fontSizeRange');
+const fontSizeVal = document.getElementById('fontSizeVal');
+const fontFamilySelect = document.getElementById('fontFamilySelect');
+const lineHeightRange = document.getElementById('lineHeightRange');
+const lineHeightVal = document.getElementById('lineHeightVal');
+const contentWidthRange = document.getElementById('contentWidthRange');
+const contentWidthVal = document.getElementById('contentWidthVal');
+const resetSettingsBtn = document.getElementById('resetSettingsBtn');
+
+const toast = document.getElementById('toast');
 
 // ============================================================
 // ===== State ================================================
@@ -109,11 +125,20 @@ let currentChapter = parseInt(localStorage.getItem('chapter')) || 3;
 const bibleCache = {};
 let allBooksLoaded = false;
 
-// Annotations: key = "Book Ch:Verse", value = { color, bookmarked }
 let annotations = JSON.parse(localStorage.getItem('annotations') || '{}');
 
 let selectedVerseEl = null;
 let selectedVerseKey = null;
+
+// Reading settings
+const DEFAULT_SETTINGS = {
+    fontSize: 18,
+    fontFamily: 'serif',
+    lineHeight: 1.7,
+    contentWidth: 720
+};
+
+let settings = { ...DEFAULT_SETTINGS, ...JSON.parse(localStorage.getItem('readerSettings') || '{}') };
 
 // ============================================================
 // ===== Helpers ==============================================
@@ -135,6 +160,143 @@ function escapeHtml(s) {
 function escapeRegex(s) {
     return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
+
+function slugifyBook(name) {
+    return name.toLowerCase().replace(/\s+/g, '-');
+}
+
+function showToast(msg, ms = 1800) {
+    toast.textContent = msg;
+    toast.classList.remove('hidden');
+    // force reflow for transition
+    void toast.offsetWidth;
+    toast.classList.add('show');
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.classList.add('hidden'), 300);
+    }, ms);
+}
+
+// ============================================================
+// ===== Reading settings =====================================
+// ============================================================
+const FONT_FAMILIES = {
+    serif: "Georgia, 'Times New Roman', serif",
+    sans: "'Segoe UI', system-ui, -apple-system, sans-serif",
+    mono: "'Consolas', 'Monaco', monospace",
+    dyslexic: "'Comic Sans MS', 'Trebuchet MS', sans-serif"
+};
+
+function applySettings() {
+    const root = document.documentElement;
+    root.style.setProperty('--reader-font-size', settings.fontSize + 'px');
+    root.style.setProperty('--reader-line-height', settings.lineHeight);
+    root.style.setProperty('--reader-font-family', FONT_FAMILIES[settings.fontFamily] || FONT_FAMILIES.serif);
+    root.style.setProperty('--reader-max-width', settings.contentWidth + 'px');
+
+    // Update UI labels
+    fontSizeVal.textContent = settings.fontSize + 'px';
+    lineHeightVal.textContent = settings.lineHeight.toFixed(1);
+    contentWidthVal.textContent = settings.contentWidth + 'px';
+
+    // Update input values
+    fontSizeRange.value = settings.fontSize;
+    fontFamilySelect.value = settings.fontFamily;
+    lineHeightRange.value = settings.lineHeight;
+    contentWidthRange.value = settings.contentWidth;
+
+    localStorage.setItem('readerSettings', JSON.stringify(settings));
+}
+
+fontSizeRange.addEventListener('input', e => {
+    settings.fontSize = parseInt(e.target.value);
+    applySettings();
+});
+fontFamilySelect.addEventListener('change', e => {
+    settings.fontFamily = e.target.value;
+    applySettings();
+});
+lineHeightRange.addEventListener('input', e => {
+    settings.lineHeight = parseFloat(e.target.value);
+    applySettings();
+});
+contentWidthRange.addEventListener('input', e => {
+    settings.contentWidth = parseInt(e.target.value);
+    applySettings();
+});
+resetSettingsBtn.addEventListener('click', () => {
+    settings = { ...DEFAULT_SETTINGS };
+    applySettings();
+});
+
+settingsBtn.addEventListener('click', () => {
+    settingsPanel.classList.remove('hidden');
+});
+closeSettingsBtn.addEventListener('click', () => {
+    settingsPanel.classList.add('hidden');
+});
+
+// ============================================================
+// ===== URL hash routing =====================================
+// ============================================================
+// Format: #book-slug/chapter[/verse]
+//   #john/3
+//   #john/3/16
+//   #1-samuel/17/45
+
+function parseHash() {
+    const hash = window.location.hash.replace(/^#/, '');
+    if (!hash) return null;
+    const parts = hash.split('/');
+    if (parts.length < 2) return null;
+
+    const bookSlug = parts[0];
+    const chapter = parseInt(parts[1]);
+    const verse = parts[2] ? parseInt(parts[2]) : null;
+
+    if (!chapter || isNaN(chapter)) return null;
+
+    // Match slug back to a book name
+    const book = BOOK_NAMES.find(b => slugifyBook(b) === bookSlug);
+    if (!book) return null;
+
+    return { book, chapter, verse };
+}
+
+function updateHash(book, chapter, verse = null) {
+    const slug = slugifyBook(book);
+    const hash = verse ? `#${slug}/${chapter}/${verse}` : `#${slug}/${chapter}`;
+    if (window.location.hash !== hash) {
+        history.replaceState(null, '', hash);
+    }
+}
+
+async function handleHashChange(fromPopState = false) {
+    const target = parseHash();
+    if (!target) return;
+
+    currentBook = target.book;
+    currentChapter = target.chapter;
+    bookSelect.value = currentBook;
+    fillChapters(currentBook);
+    chapterSelect.value = currentChapter;
+
+    await loadChapter(currentBook, currentChapter);
+
+    if (target.verse) {
+        const verseEl = document.querySelector(`#reader .verse[data-verse="${target.verse}"]`);
+        if (verseEl) {
+            setTimeout(() => {
+                verseEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                verseEl.classList.add('highlight');
+                setTimeout(() => verseEl.classList.remove('highlight'), 2500);
+            }, 100);
+        }
+    }
+}
+
+window.addEventListener('hashchange', () => handleHashChange(true));
 
 // ============================================================
 // ===== Book / chapter dropdowns =============================
@@ -216,6 +378,7 @@ async function loadChapter(book, chapter) {
 
         localStorage.setItem('book', book);
         localStorage.setItem('chapter', chapter);
+        updateHash(book, chapter);
 
     } catch (err) {
         console.error(err);
@@ -279,7 +442,7 @@ themeBtn.addEventListener('click', () => {
 });
 
 // ============================================================
-// ===== Verse toolbar (bookmarks + highlights) ===============
+// ===== Verse toolbar ========================================
 // ============================================================
 function onVerseClick(e) {
     if (e.target.closest('.verse-toolbar')) return;
@@ -350,6 +513,60 @@ vtBookmark.addEventListener('click', () => {
     saveAnnotations();
     selectedVerseEl.classList.toggle('bookmarked', !!ann.bookmarked);
     vtBookmark.classList.toggle('active', !!ann.bookmarked);
+    showToast(ann.bookmarked ? '🔖 Bookmarked' : 'Bookmark removed');
+});
+
+// Copy verse text
+vtCopy.addEventListener('click', async () => {
+    if (!selectedVerseEl) return;
+    const book = selectedVerseEl.dataset.book;
+    const chapter = selectedVerseEl.dataset.chapter;
+    const verse = selectedVerseEl.dataset.verse;
+
+    // Get verse text without the verse-number span
+    const clone = selectedVerseEl.cloneNode(true);
+    const numSpan = clone.querySelector('.verse-num');
+    if (numSpan) numSpan.remove();
+    const text = clone.textContent.trim();
+
+    const formatted = `${book} ${chapter}:${verse} — ${text} (KJV)`;
+
+    try {
+        await navigator.clipboard.writeText(formatted);
+        showToast('✓ Copied verse');
+    } catch (err) {
+        // Fallback
+        const ta = document.createElement('textarea');
+        ta.value = formatted;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        showToast('✓ Copied verse');
+    }
+});
+
+// Copy link to verse
+vtLink.addEventListener('click', async () => {
+    if (!selectedVerseEl) return;
+    const book = selectedVerseEl.dataset.book;
+    const chapter = selectedVerseEl.dataset.chapter;
+    const verse = selectedVerseEl.dataset.verse;
+
+    const url = `${window.location.origin}${window.location.pathname}#${slugifyBook(book)}/${chapter}/${verse}`;
+
+    try {
+        await navigator.clipboard.writeText(url);
+        showToast('🔗 Link copied');
+    } catch (err) {
+        const ta = document.createElement('textarea');
+        ta.value = url;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        showToast('🔗 Link copied');
+    }
 });
 
 // Color dots
@@ -580,6 +797,7 @@ async function jumpToVerse(book, chapter, verse) {
     chapterSelect.value = chapter;
 
     await loadChapter(book, chapter);
+    updateHash(book, chapter, verse);
 
     const verseEl = document.querySelector(`#reader .verse[data-verse="${verse}"]`);
     if (verseEl) {
@@ -634,16 +852,43 @@ closeSearchBtn.addEventListener('click', () => {
 // ============================================================
 // ===== Init =================================================
 // ============================================================
-(function init() {
+(async function init() {
+    // Theme
     const savedTheme = localStorage.getItem('theme') || 'light';
     document.documentElement.setAttribute('data-theme', savedTheme);
     themeBtn.textContent = savedTheme === 'dark' ? '☀️' : '🌙';
 
+    // Settings
+    applySettings();
+
+    // Dropdowns
     bookSelect.value = currentBook;
     fillChapters(currentBook);
     chapterSelect.value = currentChapter;
 
-    loadChapter(currentBook, currentChapter);
+    // If URL has a hash, prefer that
+    const fromHash = parseHash();
+    if (fromHash) {
+        currentBook = fromHash.book;
+        currentChapter = fromHash.chapter;
+        bookSelect.value = currentBook;
+        fillChapters(currentBook);
+        chapterSelect.value = currentChapter;
+    }
+
+    await loadChapter(currentBook, currentChapter);
+
+    // If hash had a verse, jump to it after load
+    if (fromHash && fromHash.verse) {
+        const verseEl = document.querySelector(`#reader .verse[data-verse="${fromHash.verse}"]`);
+        if (verseEl) {
+            setTimeout(() => {
+                verseEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                verseEl.classList.add('highlight');
+                setTimeout(() => verseEl.classList.remove('highlight'), 2500);
+            }, 150);
+        }
+    }
 })();
 
 // ============================================================
