@@ -1,25 +1,111 @@
 {
-    "name": "Bible Reader",
-    "short_name": "Bible",
-    "description": "Read the King James Version Bible offline",
-    "start_url": "./",
+    "id": "/bible-site/",
+    "name": "Oneness Bible",
+    "short_name": "Oneness",
+    "description": "Read the King James Version Bible offline. Beautiful, distraction-free, private — one with The Word.",
+    "lang": "en",
+    "dir": "ltr",
+    "start_url": "./?source=pwa",
     "scope": "./",
     "display": "standalone",
+    "display_override": [
+        "window-controls-overlay",
+        "standalone",
+        "minimal-ui"
+    ],
     "orientation": "portrait",
-    "background_color": "#fdfcf8",
-    "theme_color": "#6b4423",
+    "background_color": "#fdf8f0",
+    "theme_color": "#1a3a7a",
+    "categories": [
+        "books",
+        "education",
+        "lifestyle"
+    ],
+    "prefer_related_applications": false,
     "icons": [
+        {
+            "src": "./icons/favicon-16x16.png",
+            "sizes": "16x16",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "./icons/favicon-32x32.png",
+            "sizes": "32x32",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "./icons/apple-touch-icon.png",
+            "sizes": "180x180",
+            "type": "image/png",
+            "purpose": "any"
+        },
         {
             "src": "./icons/icon-192.png",
             "sizes": "192x192",
             "type": "image/png",
-            "purpose": "any maskable"
+            "purpose": "any"
         },
         {
             "src": "./icons/icon-512.png",
             "sizes": "512x512",
             "type": "image/png",
-            "purpose": "any maskable"
+            "purpose": "any"
+        },
+        {
+            "src": "./icons/icon-192-maskable.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "maskable"
+        },
+        {
+            "src": "./icons/icon-512-maskable.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "maskable"
+        }
+    ],
+    "screenshots": [
+        {
+            "src": "./screenshots/home.png",
+            "sizes": "828x1696",
+            "type": "image/png",
+            "form_factor": "narrow",
+            "label": "Verse of the Day on the home screen"
+        },
+        {
+            "src": "./screenshots/reader.png",
+            "sizes": "828x1696",
+            "type": "image/png",
+            "form_factor": "narrow",
+            "label": "Reading Matthew 5 in the KJV"
+        }
+    ],
+    "shortcuts": [
+        {
+            "name": "Continue Reading",
+            "short_name": "Continue",
+            "description": "Jump back to your last chapter",
+            "url": "./#john/3",
+            "icons": [
+                {
+                    "src": "./icons/icon-192.png",
+                    "sizes": "192x192"
+                }
+            ]
+        },
+        {
+            "name": "Verse of the Day",
+            "short_name": "VOTD",
+            "description": "Today's verse",
+            "url": "./",
+            "icons": [
+                {
+                    "src": "./icons/icon-192.png",
+                    "sizes": "192x192"
+                }
+            ]
         }
     ]
 }

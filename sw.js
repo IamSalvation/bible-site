@@ -1,5 +1,5 @@
 // sw.js — Service Worker for offline Bible reading
-const CACHE = 'bible-kjv-v9';   // was v
+const CACHE = 'bible-kjv-v9';
 
 const LUCIDE_URL = 'https://unpkg.com/lucide@latest';
 
@@ -17,9 +17,13 @@ self.addEventListener('install', event => {
                 './icons/logo.png',
                 './icons/icon-192.png',
                 './icons/icon-512.png',
+                './icons/icon-192-maskable.png',
+                './icons/icon-512-maskable.png',
                 './icons/favicon-32x32.png',
                 './icons/favicon-16x16.png',
-                './icons/apple-touch-icon.png'
+                './icons/apple-touch-icon.png',
+                './screenshots/home.png',
+                './screenshots/reader.png'
             ])
         )
     );
