@@ -168,7 +168,6 @@ function slugifyBook(name) {
 function showToast(msg, ms = 1800) {
     toast.textContent = msg;
     toast.classList.remove('hidden');
-    // force reflow for transition
     void toast.offsetWidth;
     toast.classList.add('show');
     clearTimeout(showToast._t);
@@ -176,6 +175,15 @@ function showToast(msg, ms = 1800) {
         toast.classList.remove('show');
         setTimeout(() => toast.classList.add('hidden'), 300);
     }, ms);
+}
+
+// ============================================================
+// ===== Panel management (only one open at a time) ===========
+// ============================================================
+function closeAllPanels(except = null) {
+    if (except !== 'bookmarks') bookmarksPanel.classList.add('hidden');
+    if (except !== 'settings') settingsPanel.classList.add('hidden');
+    if (except !== 'search') searchResults.classList.add('hidden');
 }
 
 // ============================================================
@@ -195,12 +203,10 @@ function applySettings() {
     root.style.setProperty('--reader-font-family', FONT_FAMILIES[settings.fontFamily] || FONT_FAMILIES.serif);
     root.style.setProperty('--reader-max-width', settings.contentWidth + 'px');
 
-    // Update UI labels
     fontSizeVal.textContent = settings.fontSize + 'px';
     lineHeightVal.textContent = settings.lineHeight.toFixed(1);
     contentWidthVal.textContent = settings.contentWidth + 'px';
 
-    // Update input values
     fontSizeRange.value = settings.fontSize;
     fontFamilySelect.value = settings.fontFamily;
     lineHeightRange.value = settings.lineHeight;
@@ -230,13 +236,6 @@ resetSettingsBtn.addEventListener('click', () => {
     applySettings();
 });
 
-settingsBtn.addEventListener('click', () => {
-    settingsPanel.classList.remove('hidden');
-});
-closeSettingsBtn.addEventListener('click', () => {
-    settingsPanel.classList.add('hidden');
-});
-
 // ============================================================
 // ===== URL hash routing =====================================
 // ============================================================
@@ -257,7 +256,6 @@ function parseHash() {
 
     if (!chapter || isNaN(chapter)) return null;
 
-    // Match slug back to a book name
     const book = BOOK_NAMES.find(b => slugifyBook(b) === bookSlug);
     if (!book) return null;
 
@@ -272,7 +270,7 @@ function updateHash(book, chapter, verse = null) {
     }
 }
 
-async function handleHashChange(fromPopState = false) {
+async function handleHashChange() {
     const target = parseHash();
     if (!target) return;
 
@@ -296,7 +294,7 @@ async function handleHashChange(fromPopState = false) {
     }
 }
 
-window.addEventListener('hashchange', () => handleHashChange(true));
+window.addEventListener('hashchange', handleHashChange);
 
 // ============================================================
 // ===== Book / chapter dropdowns =============================
@@ -523,7 +521,6 @@ vtCopy.addEventListener('click', async () => {
     const chapter = selectedVerseEl.dataset.chapter;
     const verse = selectedVerseEl.dataset.verse;
 
-    // Get verse text without the verse-number span
     const clone = selectedVerseEl.cloneNode(true);
     const numSpan = clone.querySelector('.verse-num');
     if (numSpan) numSpan.remove();
@@ -535,7 +532,6 @@ vtCopy.addEventListener('click', async () => {
         await navigator.clipboard.writeText(formatted);
         showToast('✓ Copied verse');
     } catch (err) {
-        // Fallback
         const ta = document.createElement('textarea');
         ta.value = formatted;
         document.body.appendChild(ta);
@@ -675,7 +671,7 @@ function renderBookmarks() {
         btn.addEventListener('click', e => {
             e.stopPropagation();
             jumpToVerse(btn.dataset.book, parseInt(btn.dataset.chapter), parseInt(btn.dataset.verse));
-            bookmarksPanel.classList.add('hidden');
+            closeAllPanels();
         });
     });
 
@@ -690,13 +686,47 @@ function renderBookmarks() {
     });
 }
 
-bookmarksBtn.addEventListener('click', () => {
+// ============================================================
+// ===== Panel open/close handlers ============================
+// ============================================================
+
+// Bookmarks
+bookmarksBtn.addEventListener('click', e => {
+    e.stopPropagation();
+    closeAllPanels('bookmarks');
     renderBookmarks();
     bookmarksPanel.classList.remove('hidden');
 });
 
 closeBookmarksBtn.addEventListener('click', () => {
     bookmarksPanel.classList.add('hidden');
+});
+
+// Settings
+settingsBtn.addEventListener('click', e => {
+    e.stopPropagation();
+    closeAllPanels('settings');
+    settingsPanel.classList.remove('hidden');
+});
+
+closeSettingsBtn.addEventListener('click', () => {
+    settingsPanel.classList.add('hidden');
+});
+
+// Click outside any panel → close it
+document.addEventListener('click', e => {
+    const insideBookmarks = bookmarksPanel.contains(e.target);
+    const insideSettings = settingsPanel.contains(e.target);
+    const insideSearch = searchResults.contains(e.target);
+
+    // If the click is inside a currently open panel, let it be
+    if (insideBookmarks || insideSettings || insideSearch) return;
+
+    // If the click is on the opener button, the button's own handler already ran
+    if (e.target.closest('#bookmarksBtn')) return;
+    if (e.target.closest('#settingsBtn')) return;
+
+    closeAllPanels();
 });
 
 // ============================================================
@@ -787,7 +817,7 @@ function renderResults(results, query, truncated) {
 }
 
 async function jumpToVerse(book, chapter, verse) {
-    searchResults.classList.add('hidden');
+    closeAllPanels();
     searchInput.value = '';
 
     currentBook = book;
@@ -815,6 +845,7 @@ function debounce(fn, ms) {
 async function runSearch() {
     const q = searchInput.value.trim();
     if (q.length < 2) return;
+    closeAllPanels('search');
     searchResults.classList.remove('hidden');
 
     if (!allBooksLoaded) {
@@ -853,20 +884,16 @@ closeSearchBtn.addEventListener('click', () => {
 // ===== Init =================================================
 // ============================================================
 (async function init() {
-    // Theme
     const savedTheme = localStorage.getItem('theme') || 'light';
     document.documentElement.setAttribute('data-theme', savedTheme);
     themeBtn.textContent = savedTheme === 'dark' ? '☀️' : '🌙';
 
-    // Settings
     applySettings();
 
-    // Dropdowns
     bookSelect.value = currentBook;
     fillChapters(currentBook);
     chapterSelect.value = currentChapter;
 
-    // If URL has a hash, prefer that
     const fromHash = parseHash();
     if (fromHash) {
         currentBook = fromHash.book;
@@ -878,7 +905,6 @@ closeSearchBtn.addEventListener('click', () => {
 
     await loadChapter(currentBook, currentChapter);
 
-    // If hash had a verse, jump to it after load
     if (fromHash && fromHash.verse) {
         const verseEl = document.querySelector(`#reader .verse[data-verse="${fromHash.verse}"]`);
         if (verseEl) {
