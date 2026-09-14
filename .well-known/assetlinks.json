@@ -1,1 +1,9 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "io.github.iamsalvation.onenessbible",
+        "sha256_cert_fingerprints": ["50:D1:9F:6C:F9:20:20:3A:4E:F8:C3:48:1D:ED:E9:98:BA:7F:C4:9E:EC:ED:69:6F:B9:BB:04:B5:DA:E9:8E:32"]
+      }
+    }]
 
