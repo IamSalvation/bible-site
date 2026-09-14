@@ -23,12 +23,21 @@
 <body>
     <header>
         <h1>📖 Bible Reader</h1>
+
+        <!-- Search bar -->
+        <div class="search-bar">
+            <input type="search" id="searchInput" placeholder="Search the Bible… (e.g. love, grace, born again)"
+                autocomplete="off">
+            <button id="clearSearchBtn" title="Clear" type="button">✕</button>
+        </div>
+
         <nav class="controls">
             <select id="bookSelect"></select>
             <select id="chapterSelect"></select>
-            <button id="prevBtn">← Prev</button>
-            <button id="nextBtn">Next →</button>
-            <button id="themeBtn">🌙</button>
+            <button id="prevBtn" type="button">← Prev</button>
+            <button id="nextBtn" type="button">Next →</button>
+            <button id="bookmarksBtn" type="button" title="Bookmarks">🔖</button>
+            <button id="themeBtn" type="button">🌙</button>
         </nav>
     </header>
 
@@ -39,6 +48,38 @@
     <footer>
         <p>King James Version (Public Domain)</p>
     </footer>
+
+    <!-- Search results overlay -->
+    <div id="searchResults" class="search-results hidden">
+        <div class="search-results-header">
+            <span id="searchStatus">Search</span>
+            <button id="closeSearchBtn" type="button">✕ Close</button>
+        </div>
+        <div id="searchResultsList"></div>
+    </div>
+
+    <!-- Floating verse toolbar -->
+    <div id="verseToolbar" class="verse-toolbar hidden">
+        <button class="vt-btn" id="vtBookmark" title="Bookmark" type="button">🔖</button>
+        <span class="vt-divider"></span>
+        <button class="vt-color" data-color="yellow" title="Yellow" type="button"></button>
+        <button class="vt-color" data-color="green" title="Green" type="button"></button>
+        <button class="vt-color" data-color="blue" title="Blue" type="button"></button>
+        <button class="vt-color" data-color="pink" title="Pink" type="button"></button>
+        <button class="vt-color" data-color="purple" title="Purple" type="button"></button>
+        <span class="vt-divider"></span>
+        <button class="vt-btn" id="vtClear" title="Clear" type="button">✕</button>
+        <button class="vt-btn" id="vtClose" title="Close" type="button">×</button>
+    </div>
+
+    <!-- Bookmarks panel -->
+    <div id="bookmarksPanel" class="bookmarks-panel hidden">
+        <div class="bookmarks-header">
+            <span>🔖 Bookmarks</span>
+            <button id="closeBookmarksBtn" type="button">✕ Close</button>
+        </div>
+        <div id="bookmarksList"></div>
+    </div>
 
     <script src="app.js"></script>
 </body>
