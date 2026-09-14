@@ -1,7 +1,7 @@
 // sw.js — Service Worker for offline Bible reading
-const CACHE = 'bible-kjv-v1';
+const CACHE = 'bible-kjv-v2';
 
-// On install, cache the app shell (NOT the data — too many files to precache)
+// On install, cache the app shell + manifest + icons
 self.addEventListener('install', event => {
     event.waitUntil(
         caches.open(CACHE).then(cache =>
@@ -9,7 +9,13 @@ self.addEventListener('install', event => {
                 './',
                 './index.html',
                 './style.css',
-                './app.js'
+                './app.js',
+                './manifest.json',
+                './icons/icon-192.png',
+                './icons/icon-512.png',
+                './icons/favicon-32x32.png',
+                './icons/favicon-16x16.png',
+                './icons/apple-touch-icon.png'
             ])
         )
     );
@@ -27,16 +33,15 @@ self.addEventListener('activate', event => {
 });
 
 // Fetch strategy:
-//   /data/*.json  → cache-first (Bible data is immutable, cache forever)
+//   /data/*.json  → cache-first (Bible data)
 //   everything else → network-first with cache fallback
 self.addEventListener('fetch', event => {
     const url = new URL(event.request.url);
 
-    // Only handle same-origin requests (skip API calls etc.)
+    // Only handle same-origin requests
     if (url.origin !== self.location.origin) return;
 
     if (url.pathname.includes('/data/')) {
-        // Cache-first for Bible data
         event.respondWith(
             caches.match(event.request).then(cached => {
                 if (cached) return cached;
@@ -52,7 +57,6 @@ self.addEventListener('fetch', event => {
         return;
     }
 
-    // Network-first for the app shell
     event.respondWith(
         fetch(event.request)
             .then(res => {
