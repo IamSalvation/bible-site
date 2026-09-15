@@ -1,5 +1,5 @@
 // sw.js — Service Worker for offline Bible reading
-const CACHE = 'bible-kjv-v10';
+const CACHE = 'bible-kjv-v11';
 
 const LUCIDE_URL = 'https://unpkg.com/lucide@latest';
 

@@ -413,7 +413,7 @@ async function downloadAllBooks() {
 
             // Add to service worker cache explicitly so it's guaranteed offline
             if ('caches' in window) {
-                const cache = await caches.open('bible-kjv-v10');
+                const cache = await caches.open('bible-kjv-v11');
                 await cache.put(`./data/${file}.json`, res.clone());
             }
 
