@@ -67,6 +67,51 @@
                 </button>
             </div>
 
+            <!-- Offline Download Card -->
+            <div class="home-card" id="offlineCard">
+                <div class="card-label">
+                    <i data-lucide="download-cloud"></i>
+                    <span id="offlineLabel">Offline Reading</span>
+                </div>
+
+                <!-- Not-downloaded state -->
+                <div id="offlinePrompt" class="offline-state">
+                    <p class="offline-desc">
+                        Download the entire Bible so you can read anywhere — no internet needed.
+                    </p>
+                    <button type="button" id="downloadAllBtn" class="btn-primary home-full-btn">
+                        <i data-lucide="download"></i>
+                        <span>Download all · ~4.5 MB</span>
+                    </button>
+                </div>
+
+                <!-- Downloading state -->
+                <div id="offlineProgress" class="offline-state hidden">
+                    <p class="offline-desc" id="offlineProgressText">
+                        Downloading… 0 / 66 books
+                    </p>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="offlineProgressFill"></div>
+                    </div>
+                    <p class="progress-percent" id="offlineProgressPercent">0%</p>
+                </div>
+
+                <!-- Complete state (compact) -->
+                <div id="offlineComplete" class="offline-state hidden">
+                    <p class="offline-desc">
+                        <i data-lucide="check-circle-2"></i>
+                        <span>All 66 books available offline</span>
+                    </p>
+                    <div class="offline-meta">
+                        <span class="offline-meta-text">Downloaded · ~4.5 MB</span>
+                        <button type="button" id="redownloadBtn" class="link-btn" title="Re-download offline Bible">
+                            <i data-lucide="refresh-cw"></i>
+                            <span>Refresh</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
             <!-- Stats -->
             <div class="home-card" id="statsCard">
                 <div class="card-label">

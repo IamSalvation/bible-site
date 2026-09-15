@@ -23,8 +23,7 @@ self.addEventListener('install', event => {
                 './icons/apple-touch-icon.png',
                 './screenshots/home.png',
                 './screenshots/reader.png'
-                // NOTE: Lucide CDN is NOT precached here on purpose.
-                // It is cached lazily by the fetch handler below.
+                // NOTE: Lucide CDN is NOT precached. It's cached lazily by the fetch handler.
             ])
         )
     );
@@ -43,7 +42,7 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
     const url = new URL(event.request.url);
 
-    // Bible data — cache-first (immutable)
+    // Bible data — cache-first
     if (url.pathname.includes('/data/')) {
         event.respondWith(
             caches.match(event.request).then(cached => {
@@ -60,7 +59,7 @@ self.addEventListener('fetch', event => {
         return;
     }
 
-    // Lucide CDN — cache-first (lazy; not precached)
+    // Lucide CDN — cache-first (lazy)
     if (url.href === LUCIDE_URL || url.hostname === 'unpkg.com') {
         event.respondWith(
             caches.match(event.request).then(cached => {
@@ -77,7 +76,7 @@ self.addEventListener('fetch', event => {
         return;
     }
 
-    // Only handle same-origin for everything else
+    // Same-origin only
     if (url.origin !== self.location.origin) return;
 
     // Network-first with cache fallback

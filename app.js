@@ -18,6 +18,7 @@ const APP_VERSION = '1.0';
 const SETTINGS_KEY = 'readerSettings';
 const ANNOTATIONS_KEY = 'annotations';
 const STATS_KEY = 'readingStats';
+const OFFLINE_STATE_KEY = 'offlineDownloadState';
 
 const DEFAULT_SETTINGS = {
     fontSize: 18,
@@ -133,6 +134,17 @@ const homeSearchBtn = $('homeSearchBtn');
 const homeAboutBtn = $('homeAboutBtn');
 const homeShareBtn = $('homeShareBtn');
 const homeInstallBtn = $('homeInstallBtn');
+
+// Offline download
+const offlinePrompt = $('offlinePrompt');
+const offlineProgress = $('offlineProgress');
+const offlineComplete = $('offlineComplete');
+const offlineProgressText = $('offlineProgressText');
+const offlineProgressFill = $('offlineProgressFill');
+const offlineProgressPercent = $('offlineProgressPercent');
+const downloadAllBtn = $('downloadAllBtn');
+const redownloadBtn = $('redownloadBtn');
+const offlineLabel = $('offlineLabel');
 
 const homeBtn = $('homeBtn');
 const bookmarksBtn = $('bookmarksBtn');
@@ -269,6 +281,7 @@ function showHome() {
     updateHomeStats();
     updateContinueCard();
     renderVotd();
+    renderOfflineCard();
     refreshLucideIcons();
 }
 
@@ -373,6 +386,113 @@ votdRefreshBtn.addEventListener('click', () => {
     if (!list.length) return;
     votdIndexOverride = ((votdIndexOverride ?? dayOfYear()) + 1) % list.length;
     renderVotd();
+});
+
+// ============================================================
+// ===== Offline download (all 66 books) =======================
+// ============================================================
+async function downloadAllBooks() {
+    downloadAllBtn.disabled = true;
+    redownloadBtn.disabled = true;
+
+    offlinePrompt.classList.add('hidden');
+    offlineComplete.classList.add('hidden');
+    offlineProgress.classList.remove('hidden');
+
+    offlineLabel.textContent = 'Downloading…';
+
+    const total = BOOK_NAMES.length;
+    let done = 0;
+    const failures = [];
+
+    for (const book of BOOK_NAMES) {
+        const file = BOOKS[book].file;
+        try {
+            const res = await fetch(`./data/${file}.json`, { cache: 'no-store' });
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+            // Add to service worker cache explicitly so it's guaranteed offline
+            if ('caches' in window) {
+                const cache = await caches.open('bible-kjv-v10');
+                await cache.put(`./data/${file}.json`, res.clone());
+            }
+
+            // Warm the in-memory cache
+            if (!bibleCache[book]) {
+                const data = await res.json();
+                bibleCache[book] = data;
+            }
+        } catch (err) {
+            console.warn(`Failed to download ${book}:`, err.message);
+            failures.push(book);
+        }
+
+        done++;
+        const percent = Math.round((done / total) * 100);
+        offlineProgressText.textContent = `Downloading… ${done} / ${total} books`;
+        offlineProgressFill.style.width = `${percent}%`;
+        offlineProgressPercent.textContent = `${percent}%`;
+
+        await new Promise(r => setTimeout(r, 20));
+    }
+
+    const success = failures.length === 0;
+    localStorage.setItem(OFFLINE_STATE_KEY, JSON.stringify({
+        completed: success,
+        completedAt: Date.now(),
+        failed: failures
+    }));
+
+    offlineProgress.classList.add('hidden');
+
+    if (success) {
+        offlineComplete.classList.remove('hidden');
+        showToast('✅ Entire Bible available offline');
+    } else {
+        offlinePrompt.classList.remove('hidden');
+        showToast(`⚠️ ${failures.length} books failed — try again`);
+    }
+
+    downloadAllBtn.disabled = false;
+    redownloadBtn.disabled = false;
+
+    renderOfflineCard();
+}
+
+function renderOfflineCard() {
+    const raw = localStorage.getItem(OFFLINE_STATE_KEY);
+    const state = raw ? JSON.parse(raw) : null;
+
+    offlinePrompt.classList.add('hidden');
+    offlineProgress.classList.add('hidden');
+    offlineComplete.classList.add('hidden');
+
+    if (state && state.completed) {
+        offlineComplete.classList.remove('hidden');
+        offlineLabel.textContent = 'Offline Reading';
+
+        const metaText = offlineComplete.querySelector('.offline-meta-text');
+        if (metaText && state.completedAt) {
+            const d = new Date(state.completedAt);
+            const dateStr = d.toLocaleDateString(undefined, {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric'
+            });
+            metaText.textContent = `Downloaded ${dateStr} · ~4.5 MB`;
+        }
+    } else {
+        offlinePrompt.classList.remove('hidden');
+        offlineLabel.textContent = 'Offline Reading';
+    }
+
+    refreshLucideIcons();
+}
+
+downloadAllBtn.addEventListener('click', downloadAllBooks);
+redownloadBtn.addEventListener('click', () => {
+    localStorage.removeItem(OFFLINE_STATE_KEY);
+    downloadAllBooks();
 });
 
 // ============================================================
@@ -1180,6 +1300,7 @@ homeInstallBtn.addEventListener('click', () => {
     }
 
     updateHomeStats();
+    renderOfflineCard();
     refreshLucideIcons();
 })();
 
