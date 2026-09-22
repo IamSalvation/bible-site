@@ -2,6 +2,54 @@
 // ===== ONENESS BIBLE — app.js ===============================
 // ============================================================
 
+// ============================================================
+// ===== Splash screen controller =============================
+// Shows once per session, except on Android installed PWA
+// (Android shows its own native splash).
+// ============================================================
+(function initSplash() {
+    const splash = document.getElementById('splash');
+    if (!splash) return;
+
+    const SPLASH_KEY = 'oneness_splash_shown';
+    const DURATION = 1400;
+
+    if (sessionStorage.getItem(SPLASH_KEY) === '1') {
+        splash.remove();
+        return;
+    }
+
+    const isAndroidInstalled =
+        /Android/i.test(navigator.userAgent) &&
+        window.matchMedia('(display-mode: standalone)').matches;
+
+    if (isAndroidInstalled) {
+        splash.remove();
+        sessionStorage.setItem(SPLASH_KEY, '1');
+        return;
+    }
+
+    let dismissed = false;
+
+    function dismissSplash() {
+        if (dismissed) return;
+        dismissed = true;
+        sessionStorage.setItem(SPLASH_KEY, '1');
+        splash.classList.add('dismissing');
+        setTimeout(() => splash.remove(), 600);
+    }
+
+    setTimeout(dismissSplash, DURATION);
+    splash.addEventListener('click', dismissSplash);
+    splash.addEventListener('touchstart', dismissSplash, { passive: true });
+    document.addEventListener('keydown', function onKey() {
+        if (!dismissed) {
+            dismissSplash();
+            document.removeEventListener('keydown', onKey);
+        }
+    });
+})();
+
 function refreshLucideIcons() {
     if (window.lucide && typeof window.lucide.createIcons === 'function') {
         window.lucide.createIcons();
@@ -33,123 +81,35 @@ const FONT_FAMILIES = {
     dyslexic: "'Comic Sans MS', 'Trebuchet MS', sans-serif"
 };
 
-// ============================================================
-// ===== Translations registry ================================
-// ============================================================
 const TRANSLATIONS = {
-    kjv: {
-        id: 'kjv',
-        label: 'KJV',
-        fullName: 'King James Version',
-        folder: '',
-        copyright: 'Public Domain'
-    },
-    yoruba: {
-        id: 'yoruba',
-        label: 'Yoruba',
-        fullName: 'Bíbélì Mímọ́',
-        folder: 'yoruba',
-        copyright: 'Biblica® Open Yoruba Contemporary Bible™ · CC BY-SA 4.0'
-    },
-    igbo: {
-        id: 'igbo',
-        label: 'Igbo',
-        fullName: 'Baịbụl Nsọ',
-        folder: 'igbo',
-        copyright: 'Biblica® Open Igbo Contemporary Bible™ · CC BY-SA 4.0'
-    },
-    hausa: {
-        id: 'hausa',
-        label: 'Hausa',
-        fullName: 'Litafi Mai Tsarki',
-        folder: 'hausa',
-        copyright: 'Biblica® Open Hausa Contemporary Bible™ · CC BY-SA 4.0'
-    }
+    kjv: { id: 'kjv', label: 'KJV', fullName: 'King James Version', folder: '', copyright: 'Public Domain' },
+    yoruba: { id: 'yoruba', label: 'Yoruba', fullName: 'Bíbélì Mímọ́', folder: 'yoruba', copyright: 'Biblica® Open Yoruba Contemporary Bible™ · CC BY-SA 4.0' },
+    igbo: { id: 'igbo', label: 'Igbo', fullName: 'Baịbụl Nsọ', folder: 'igbo', copyright: 'Biblica® Open Igbo Contemporary Bible™ · CC BY-SA 4.0' },
+    hausa: { id: 'hausa', label: 'Hausa', fullName: 'Litafi Mai Tsarki', folder: 'hausa', copyright: 'Biblica® Open Hausa Contemporary Bible™ · CC BY-SA 4.0' }
 };
 
 const TRANSLATION_IDS = Object.keys(TRANSLATIONS);
 
-// Short labels for the collapsed translation select
-const TRANSLATION_SHORT = {
-    kjv: 'KJV',
-    yoruba: 'Yor',
-    igbo: 'Igbo',
-    hausa: 'Haus'
-};
+const TRANSLATION_SHORT = { kjv: 'KJV', yoruba: 'Yor', igbo: 'Igbo', hausa: 'Haus' };
 
-// Standard Bible book abbreviations
 const BOOK_ABBREV = {
-    "Genesis": "Gen",
-    "Exodus": "Exo",
-    "Leviticus": "Lev",
-    "Numbers": "Num",
-    "Deuteronomy": "Deut",
-    "Joshua": "Josh",
-    "Judges": "Judg",
-    "Ruth": "Ruth",
-    "1 Samuel": "1 Sam",
-    "2 Samuel": "2 Sam",
-    "1 Kings": "1 Kgs",
-    "2 Kings": "2 Kgs",
-    "1 Chronicles": "1 Chr",
-    "2 Chronicles": "2 Chr",
-    "Ezra": "Ezra",
-    "Nehemiah": "Neh",
-    "Esther": "Esth",
-    "Job": "Job",
-    "Psalms": "Ps",
-    "Proverbs": "Prov",
-    "Ecclesiastes": "Eccl",
-    "Song of Solomon": "Song",
-    "Isaiah": "Isa",
-    "Jeremiah": "Jer",
-    "Lamentations": "Lam",
-    "Ezekiel": "Ezek",
-    "Daniel": "Dan",
-    "Hosea": "Hos",
-    "Joel": "Joel",
-    "Amos": "Amos",
-    "Obadiah": "Obad",
-    "Jonah": "Jonah",
-    "Micah": "Mic",
-    "Nahum": "Nah",
-    "Habakkuk": "Hab",
-    "Zephaniah": "Zeph",
-    "Haggai": "Hag",
-    "Zechariah": "Zech",
-    "Malachi": "Mal",
-    "Matthew": "Matt",
-    "Mark": "Mark",
-    "Luke": "Luke",
-    "John": "John",
-    "Acts": "Acts",
-    "Romans": "Rom",
-    "1 Corinthians": "1 Cor",
-    "2 Corinthians": "2 Cor",
-    "Galatians": "Gal",
-    "Ephesians": "Eph",
-    "Philippians": "Phil",
-    "Colossians": "Col",
-    "1 Thessalonians": "1 Thess",
-    "2 Thessalonians": "2 Thess",
-    "1 Timothy": "1 Tim",
-    "2 Timothy": "2 Tim",
-    "Titus": "Titus",
-    "Philemon": "Phlm",
-    "Hebrews": "Heb",
-    "James": "Jas",
-    "1 Peter": "1 Pet",
-    "2 Peter": "2 Pet",
-    "1 John": "1 John",
-    "2 John": "2 John",
-    "3 John": "3 John",
-    "Jude": "Jude",
-    "Revelation": "Rev"
+    "Genesis": "Gen", "Exodus": "Exo", "Leviticus": "Lev", "Numbers": "Num", "Deuteronomy": "Deut",
+    "Joshua": "Josh", "Judges": "Judg", "Ruth": "Ruth", "1 Samuel": "1 Sam", "2 Samuel": "2 Sam",
+    "1 Kings": "1 Kgs", "2 Kings": "2 Kgs", "1 Chronicles": "1 Chr", "2 Chronicles": "2 Chr",
+    "Ezra": "Ezra", "Nehemiah": "Neh", "Esther": "Esth", "Job": "Job", "Psalms": "Ps",
+    "Proverbs": "Prov", "Ecclesiastes": "Eccl", "Song of Solomon": "Song", "Isaiah": "Isa",
+    "Jeremiah": "Jer", "Lamentations": "Lam", "Ezekiel": "Ezek", "Daniel": "Dan",
+    "Hosea": "Hos", "Joel": "Joel", "Amos": "Amos", "Obadiah": "Obad", "Jonah": "Jonah",
+    "Micah": "Mic", "Nahum": "Nah", "Habakkuk": "Hab", "Zephaniah": "Zeph", "Haggai": "Hag",
+    "Zechariah": "Zech", "Malachi": "Mal", "Matthew": "Matt", "Mark": "Mark", "Luke": "Luke",
+    "John": "John", "Acts": "Acts", "Romans": "Rom", "1 Corinthians": "1 Cor",
+    "2 Corinthians": "2 Cor", "Galatians": "Gal", "Ephesians": "Eph", "Philippians": "Phil",
+    "Colossians": "Col", "1 Thessalonians": "1 Thess", "2 Thessalonians": "2 Thess",
+    "1 Timothy": "1 Tim", "2 Timothy": "2 Tim", "Titus": "Titus", "Philemon": "Phlm",
+    "Hebrews": "Heb", "James": "Jas", "1 Peter": "1 Pet", "2 Peter": "2 Pet",
+    "1 John": "1 John", "2 John": "2 John", "3 John": "3 John", "Jude": "Jude", "Revelation": "Rev"
 };
 
-// ============================================================
-// ===== Book registry ========================================
-// ============================================================
 const BOOKS = {
     "Genesis": { file: "genesis", chapters: 50 },
     "Exodus": { file: "exodus", chapters: 40 },
@@ -722,7 +682,7 @@ async function downloadSelectedTranslations() {
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
                 if ('caches' in window) {
-                    const cache = await caches.open('bible-kjv-v18');
+                    const cache = await caches.open('bible-kjv-v19');
                     await cache.put(url, res.clone());
                 }
 

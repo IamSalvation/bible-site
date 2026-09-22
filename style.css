@@ -81,6 +81,150 @@ body {
 }
 
 /* ============================================================
+   SPLASH SCREEN
+   ============================================================ */
+.splash {
+    position: fixed;
+    inset: 0;
+    background: #1a3a7a;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.splash.dismissing {
+    opacity: 0;
+    transform: translateY(-24px) scale(1.02);
+    pointer-events: none;
+}
+
+.splash-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    text-align: center;
+    padding: 2rem;
+}
+
+.splash-logo {
+    width: 160px;
+    height: 160px;
+    object-fit: contain;
+    opacity: 0;
+    transform: scale(0.85);
+    animation: splashLogoIn 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) 0s forwards;
+    filter: drop-shadow(0 20px 60px rgba(230, 168, 32, 0.35));
+}
+
+@keyframes splashLogoIn {
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.splash-title {
+    font-family: var(--ui-font);
+    font-size: 2rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin: 0;
+    opacity: 0;
+    transform: translateY(12px);
+    animation: splashTitleIn 0.5s ease 0.4s forwards;
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+}
+
+.splash-title-gradient {
+    background: linear-gradient(135deg, #e6a820 0%, #f5c542 50%, #e6a820 100%);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+    animation: splashTitleSweep 2s ease infinite;
+}
+
+.splash-title-plain {
+    color: #ffffff;
+    opacity: 0.85;
+    font-weight: 400;
+}
+
+@keyframes splashTitleIn {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes splashTitleSweep {
+    0% {
+        background-position: -100% center;
+    }
+
+    100% {
+        background-position: 200% center;
+    }
+}
+
+.splash-tagline {
+    font-family: var(--ui-font);
+    font-size: 0.95rem;
+    font-style: italic;
+    color: rgba(255, 255, 255, 0.62);
+    letter-spacing: 0.01em;
+    margin: 0;
+    opacity: 0;
+    transform: translateY(12px);
+    animation: splashTaglineIn 0.5s ease 0.7s forwards;
+}
+
+@keyframes splashTaglineIn {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+    .splash-logo,
+    .splash-title,
+    .splash-tagline,
+    .splash-title-gradient {
+        animation: none;
+        opacity: 1;
+        transform: none;
+    }
+
+    .splash-title-gradient {
+        background: #e6a820;
+        -webkit-text-fill-color: #e6a820;
+    }
+}
+
+@media (max-width: 500px) {
+    .splash-logo {
+        width: 120px;
+        height: 120px;
+    }
+
+    .splash-title {
+        font-size: 1.6rem;
+    }
+
+    .splash-tagline {
+        font-size: 0.85rem;
+    }
+}
+
+/* ============================================================
    Lucide icon base
    ============================================================ */
 .lucide {
@@ -273,8 +417,6 @@ header.hidden {
 /* ============================================================
    Row 2 — Search + Controls
    ============================================================ */
-
-/* Search bar */
 .search-inline {
     flex: 1 1 auto;
     min-width: 100px;
@@ -349,7 +491,6 @@ header.hidden {
     color: var(--accent);
 }
 
-/* Selects and buttons in Row 2 */
 select,
 button {
     font-family: inherit;
@@ -379,7 +520,6 @@ button:hover {
     color: var(--gold);
 }
 
-/* Translation selector */
 #translationSelect {
     max-width: 70px;
     font-weight: 600;
@@ -399,11 +539,6 @@ button:hover {
     background: rgba(230, 168, 32, 0.08);
 }
 
-[data-theme="dark"] #translationSelect:hover {
-    background: rgba(230, 168, 32, 0.15);
-    color: var(--gold);
-}
-
 #bookSelect {
     max-width: 90px;
 }
@@ -412,7 +547,6 @@ button:hover {
     max-width: 65px;
 }
 
-/* Icon-only Prev/Next */
 .nav-btn {
     display: inline-flex;
     align-items: center;
@@ -1818,7 +1952,6 @@ footer.app-footer.hidden {
         height: 18px;
     }
 
-    /* Row 2 tighter */
     .header-row-2 {
         padding-left: 0.5rem;
         padding-right: 0.5rem;

@@ -26,6 +26,20 @@
 <body>
 
     <!-- ============================================================
+         SPLASH SCREEN
+         ============================================================ -->
+    <div id="splash" class="splash">
+        <div class="splash-content">
+            <img src="./icons/logo.png" alt="" class="splash-logo">
+            <h1 class="splash-title">
+                <span class="splash-title-gradient">Oneness</span>
+                <span class="splash-title-plain">BIBLE</span>
+            </h1>
+            <p class="splash-tagline">One with The Word</p>
+        </div>
+    </div>
+
+    <!-- ============================================================
        HOME SCREEN
        ============================================================ -->
     <div id="home">
@@ -183,14 +197,14 @@
                         <span>Install App</span>
                     </button>
                 </div>
-                <div class="home-version">Oneness Bible · v1.1</div>
+                <div class="home-version">Oneness Bible · v1.2</div>
             </div>
 
         </div>
     </div>
 
     <!-- ============================================================
-       READER — 2 rows: Row 1 (logo + icons), Row 2 (search + controls)
+       READER — 2 rows
        ============================================================ -->
     <header id="readerHeader" class="hidden">
 
@@ -217,7 +231,7 @@
         <div class="header-row header-row-2" id="headerRow2">
             <div class="search-inline">
                 <i data-lucide="search" class="search-icon"></i>
-                <input type="search" id="searchInput" placeholder="Search…" autocomplete="off">
+                <input type="search" id="searchInput" placeholder="Search the Bible…" autocomplete="off">
                 <button id="clearSearchBtn" title="Clear" type="button" aria-label="Clear search">
                     <i data-lucide="x"></i>
                 </button>
