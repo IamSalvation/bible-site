@@ -14,11 +14,12 @@ function refreshLucideIcons() {
 // ============================================================
 // ===== Constants ============================================
 // ============================================================
-const APP_VERSION = '1.0';
+const APP_VERSION = '1.1';
 const SETTINGS_KEY = 'readerSettings';
 const ANNOTATIONS_KEY = 'annotations';
 const STATS_KEY = 'readingStats';
 const OFFLINE_STATE_KEY = 'offlineDownloadState';
+const TRANSLATION_KEY = 'currentTranslation';
 
 const DEFAULT_SETTINGS = {
     fontSize: 18,
@@ -34,6 +35,42 @@ const FONT_FAMILIES = {
     mono: "'Consolas', 'Monaco', monospace",
     dyslexic: "'Comic Sans MS', 'Trebuchet MS', sans-serif"
 };
+
+// ============================================================
+// ===== Translations registry ================================
+// ============================================================
+const TRANSLATIONS = {
+    kjv: {
+        id: 'kjv',
+        label: 'KJV',
+        fullName: 'King James Version',
+        folder: '',              // KJV lives at data/*.json (root)
+        copyright: 'Public Domain'
+    },
+    yoruba: {
+        id: 'yoruba',
+        label: 'Yoruba',
+        fullName: 'Bíbélì Mímọ́',
+        folder: 'yoruba',
+        copyright: 'Biblica® Open Yoruba Contemporary Bible™ · CC BY-SA 4.0'
+    },
+    igbo: {
+        id: 'igbo',
+        label: 'Igbo',
+        fullName: 'Baịbụl Nsọ',
+        folder: 'igbo',
+        copyright: 'Biblica® Open Igbo Contemporary Bible™ · CC BY-SA 4.0'
+    },
+    hausa: {
+        id: 'hausa',
+        label: 'Hausa',
+        fullName: 'Litafi Mai Tsarki',
+        folder: 'hausa',
+        copyright: 'Biblica® Open Hausa Contemporary Bible™ · CC BY-SA 4.0'
+    }
+};
+
+const TRANSLATION_IDS = Object.keys(TRANSLATIONS);
 
 // ============================================================
 // ===== Book registry ========================================
@@ -143,14 +180,18 @@ const offlineProgressText = $('offlineProgressText');
 const offlineProgressFill = $('offlineProgressFill');
 const offlineProgressPercent = $('offlineProgressPercent');
 const downloadAllBtn = $('downloadAllBtn');
+const downloadBtnLabel = $('downloadBtnLabel');
 const redownloadBtn = $('redownloadBtn');
 const offlineLabel = $('offlineLabel');
+const offlineCompleteText = $('offlineCompleteText');
+const offlineMetaText = $('offlineMetaText');
 
 const homeBtn = $('homeBtn');
 const bookmarksBtn = $('bookmarksBtn');
 const settingsBtn = $('settingsBtn');
 const themeBtn = $('themeBtn');
 
+const translationSelect = $('translationSelect');
 const searchInput = $('searchInput');
 const clearSearchBtn = $('clearSearchBtn');
 const searchResults = $('searchResults');
@@ -196,9 +237,14 @@ const toast = $('toast');
 // ============================================================
 let currentBook = localStorage.getItem('book') || 'John';
 let currentChapter = parseInt(localStorage.getItem('chapter')) || 3;
+let currentTranslation = localStorage.getItem(TRANSLATION_KEY) || 'kjv';
+if (!TRANSLATIONS[currentTranslation]) currentTranslation = 'kjv';
 
+// Cache is keyed by translation → book → chapter data
+// Bible cache: { kjv: { John: {...} }, yoruba: { John: {...} }, ... }
 const bibleCache = {};
-let allBooksLoaded = false;
+
+let allBooksLoaded = false;  // per-translation flag reset on switch
 
 let annotations = JSON.parse(localStorage.getItem(ANNOTATIONS_KEY) || '{}');
 
@@ -243,6 +289,28 @@ function slugifyBook(name) {
     return name.toLowerCase().replace(/\s+/g, '-');
 }
 
+// ------------------------------------------------------------
+// Diacritic-insensitive search normalization.
+// Yoruba/Igbo/Hausa use diacritics and subdots. Users rarely
+// type them. This strips them for comparison.
+// ------------------------------------------------------------
+function normalizeForSearch(text) {
+    return text
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')   // strip combining marks
+        .replace(/ọ/g, 'o')
+        .replace(/ẹ/g, 'e')
+        .replace(/ṣ/g, 's')
+        .replace(/ụ/g, 'u')
+        .replace(/ị/g, 'i')
+        .replace(/ṅ/g, 'n')
+        .replace(/ń/g, 'n')
+        .replace(/ɓ/g, 'b')
+        .replace(/ɗ/g, 'd')
+        .replace(/ƙ/g, 'k');
+}
+
 function showToast(msg, ms = 1800) {
     toast.textContent = msg;
     toast.classList.remove('hidden');
@@ -253,6 +321,23 @@ function showToast(msg, ms = 1800) {
         toast.classList.remove('show');
         setTimeout(() => toast.classList.add('hidden'), 300);
     }, ms);
+}
+
+// ============================================================
+// ===== Translation helpers ==================================
+// ============================================================
+function getCurrentTranslation() {
+    return TRANSLATIONS[currentTranslation];
+}
+
+// Build the data URL for a given translation + book file
+// KJV:     ./data/john.json
+// Yoruba:  ./data/yoruba/john.json
+function dataUrl(translationId, bookFile) {
+    const t = TRANSLATIONS[translationId];
+    if (!t) return `./data/${bookFile}.json`;
+    if (t.folder) return `./data/${t.folder}/${bookFile}.json`;
+    return `./data/${bookFile}.json`;
 }
 
 // ============================================================
@@ -333,8 +418,9 @@ function updateHomeStats() {
 function updateContinueCard() {
     const book = localStorage.getItem('book') || 'John';
     const chapter = localStorage.getItem('chapter') || '3';
+    const t = getCurrentTranslation();
     continueTitle.textContent = `${book} ${chapter}`;
-    continueSub.textContent = 'Pick up where you left off';
+    continueSub.textContent = `Continue in ${t.label}`;
 }
 
 // ============================================================
@@ -389,9 +475,31 @@ votdRefreshBtn.addEventListener('click', () => {
 });
 
 // ============================================================
-// ===== Offline download (all 66 books) =======================
+// ===== Offline download (multi-translation) =================
 // ============================================================
-async function downloadAllBooks() {
+function getSelectedTranslationsToDownload() {
+    const checked = offlinePrompt.querySelectorAll('input[type="checkbox"]:checked');
+    return Array.from(checked).map(cb => cb.value);
+}
+
+function updateDownloadButtonLabel() {
+    const selected = getSelectedTranslationsToDownload();
+    if (selected.length === 0) {
+        downloadBtnLabel.textContent = 'Select at least one';
+        downloadAllBtn.disabled = true;
+        return;
+    }
+    downloadAllBtn.disabled = false;
+
+    const booksTotal = selected.length * BOOK_NAMES.length;
+    const sizeMb = (selected.length * 4.5).toFixed(1);
+    downloadBtnLabel.textContent = `Download ${selected.length} translation${selected.length === 1 ? '' : 's'} · ~${sizeMb} MB`;
+}
+
+async function downloadSelectedTranslations() {
+    const selected = getSelectedTranslationsToDownload();
+    if (selected.length === 0) return;
+
     downloadAllBtn.disabled = true;
     redownloadBtn.disabled = true;
 
@@ -401,56 +509,62 @@ async function downloadAllBooks() {
 
     offlineLabel.textContent = 'Downloading…';
 
-    const total = BOOK_NAMES.length;
+    const totalSteps = selected.length * BOOK_NAMES.length;
     let done = 0;
     const failures = [];
 
-    for (const book of BOOK_NAMES) {
-        const file = BOOKS[book].file;
-        try {
-            const res = await fetch(`./data/${file}.json`, { cache: 'no-store' });
-            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    for (const tId of selected) {
+        for (const book of BOOK_NAMES) {
+            const file = BOOKS[book].file;
+            const url = dataUrl(tId, file);
+            try {
+                const res = await fetch(url, { cache: 'no-store' });
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-            // Add to service worker cache explicitly so it's guaranteed offline
-            if ('caches' in window) {
-                const cache = await caches.open('bible-kjv-v11');
-                await cache.put(`./data/${file}.json`, res.clone());
+                // Add to service worker cache explicitly
+                if ('caches' in window) {
+                    const cache = await caches.open('bible-kjv-v12');
+                    await cache.put(url, res.clone());
+                }
+
+                // Warm the in-memory cache
+                if (!bibleCache[tId]) bibleCache[tId] = {};
+                if (!bibleCache[tId][book]) {
+                    const data = await res.json();
+                    bibleCache[tId][book] = data;
+                }
+            } catch (err) {
+                console.warn(`Failed to download ${tId}/${book}:`, err.message);
+                failures.push(`${tId}/${book}`);
             }
 
-            // Warm the in-memory cache
-            if (!bibleCache[book]) {
-                const data = await res.json();
-                bibleCache[book] = data;
-            }
-        } catch (err) {
-            console.warn(`Failed to download ${book}:`, err.message);
-            failures.push(book);
+            done++;
+            const percent = Math.round((done / totalSteps) * 100);
+            offlineProgressText.textContent = `Downloading… ${done} / ${totalSteps}`;
+            offlineProgressFill.style.width = `${percent}%`;
+            offlineProgressPercent.textContent = `${percent}%`;
+
+            await new Promise(r => setTimeout(r, 15));
         }
-
-        done++;
-        const percent = Math.round((done / total) * 100);
-        offlineProgressText.textContent = `Downloading… ${done} / ${total} books`;
-        offlineProgressFill.style.width = `${percent}%`;
-        offlineProgressPercent.textContent = `${percent}%`;
-
-        await new Promise(r => setTimeout(r, 20));
     }
 
     const success = failures.length === 0;
-    localStorage.setItem(OFFLINE_STATE_KEY, JSON.stringify({
-        completed: success,
-        completedAt: Date.now(),
-        failed: failures
-    }));
+    const state = JSON.parse(localStorage.getItem(OFFLINE_STATE_KEY) || '{}');
+    state.translations = Array.from(new Set([...(state.translations || []), ...selected]));
+    state.completed = success;
+    state.completedAt = Date.now();
+    state.failed = failures;
+    localStorage.setItem(OFFLINE_STATE_KEY, JSON.stringify(state));
 
     offlineProgress.classList.add('hidden');
 
     if (success) {
         offlineComplete.classList.remove('hidden');
-        showToast('✅ Entire Bible available offline');
+        showToast(`✅ ${selected.length} translation${selected.length === 1 ? '' : 's'} available offline`);
     } else {
         offlinePrompt.classList.remove('hidden');
         showToast(`⚠️ ${failures.length} books failed — try again`);
+        updateDownloadButtonLabel();
     }
 
     downloadAllBtn.disabled = false;
@@ -467,32 +581,54 @@ function renderOfflineCard() {
     offlineProgress.classList.add('hidden');
     offlineComplete.classList.add('hidden');
 
-    if (state && state.completed) {
+    const downloaded = (state && state.translations) || [];
+
+    if (state && state.completed && downloaded.length > 0) {
         offlineComplete.classList.remove('hidden');
         offlineLabel.textContent = 'Offline Reading';
 
-        const metaText = offlineComplete.querySelector('.offline-meta-text');
-        if (metaText && state.completedAt) {
+        const labels = downloaded
+            .map(id => (TRANSLATIONS[id]?.label || id))
+            .join(', ');
+        offlineCompleteText.textContent = `Available offline: ${labels}`;
+
+        if (state.completedAt) {
             const d = new Date(state.completedAt);
             const dateStr = d.toLocaleDateString(undefined, {
                 month: 'short',
                 day: 'numeric',
                 year: 'numeric'
             });
-            metaText.textContent = `Downloaded ${dateStr} · ~4.5 MB`;
+            const sizeMb = (downloaded.length * 4.5).toFixed(1);
+            offlineMetaText.textContent = `Downloaded ${dateStr} · ~${sizeMb} MB`;
         }
     } else {
         offlinePrompt.classList.remove('hidden');
         offlineLabel.textContent = 'Offline Reading';
+
+        // Pre-check the current translation
+        const checkboxes = offlinePrompt.querySelectorAll('input[type="checkbox"]');
+        checkboxes.forEach(cb => {
+            cb.checked = (cb.value === currentTranslation);
+        });
+
+        // Wire change listeners (once)
+        if (!renderOfflineCard._wired) {
+            checkboxes.forEach(cb => cb.addEventListener('change', updateDownloadButtonLabel));
+            renderOfflineCard._wired = true;
+        }
+
+        updateDownloadButtonLabel();
     }
 
     refreshLucideIcons();
 }
 
-downloadAllBtn.addEventListener('click', downloadAllBooks);
+downloadAllBtn.addEventListener('click', downloadSelectedTranslations);
 redownloadBtn.addEventListener('click', () => {
+    // Let the user pick translations again
     localStorage.removeItem(OFFLINE_STATE_KEY);
-    downloadAllBooks();
+    renderOfflineCard();
 });
 
 // ============================================================
@@ -627,6 +763,35 @@ function fillChapters(book) {
     }
 }
 
+// ------------------------------------------------------------
+// Translation dropdown
+// ------------------------------------------------------------
+TRANSLATION_IDS.forEach(id => {
+    const t = TRANSLATIONS[id];
+    const opt = document.createElement('option');
+    opt.value = id;
+    opt.textContent = `${t.label} — ${t.fullName}`;
+    translationSelect.appendChild(opt);
+});
+translationSelect.value = currentTranslation;
+
+translationSelect.addEventListener('change', async e => {
+    currentTranslation = e.target.value;
+    localStorage.setItem(TRANSLATION_KEY, currentTranslation);
+
+    // Reset per-translation search flag
+    allBooksLoaded = false;
+
+    // Update continue card on home if visible
+    updateContinueCard();
+
+    // If the reader is visible, reload current chapter seamlessly
+    if (!homeScreen.classList.contains('hidden')) return;
+    await loadChapter(currentBook, currentChapter);
+
+    showToast(`Switched to ${getCurrentTranslation().label}`);
+});
+
 // ============================================================
 // ===== Load a chapter =======================================
 // ============================================================
@@ -643,12 +808,16 @@ async function loadChapter(book, chapter) {
     }
 
     try {
-        let bookData = bibleCache[book];
+        // Ensure per-translation cache exists
+        if (!bibleCache[currentTranslation]) bibleCache[currentTranslation] = {};
+        let bookData = bibleCache[currentTranslation][book];
+
         if (!bookData) {
-            const res = await fetch(`./data/${file}.json`);
+            const url = dataUrl(currentTranslation, file);
+            const res = await fetch(url);
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             bookData = await res.json();
-            bibleCache[book] = bookData;
+            bibleCache[currentTranslation][book] = bookData;
         }
 
         const verses = bookData[String(chapter)];
@@ -835,7 +1004,8 @@ vtCopy.addEventListener('click', async () => {
     if (numSpan) numSpan.remove();
     const text = clone.textContent.trim();
 
-    const formatted = `${book} ${chapter}:${verse} — ${text} (KJV)`;
+    const t = getCurrentTranslation();
+    const formatted = `${book} ${chapter}:${verse} — ${text} (${t.label})`;
 
     try {
         await navigator.clipboard.writeText(formatted);
@@ -945,9 +1115,11 @@ function renderBookmarks() {
     }
 
     bookmarksList.innerHTML = entries.map(({ key, book, chapter, verse, ann }) => {
+        // Try to find the verse text in the current translation's cache
         let text = '';
-        if (bibleCache[book] && bibleCache[book][String(chapter)]) {
-            text = bibleCache[book][String(chapter)][verse - 1] || '';
+        const cache = bibleCache[currentTranslation] || {};
+        if (cache[book] && cache[book][String(chapter)]) {
+            text = cache[book][String(chapter)][verse - 1] || '';
         }
         if (text.length > 120) text = text.slice(0, 120) + '…';
 
@@ -1034,15 +1206,19 @@ document.addEventListener('click', e => {
 });
 
 // ============================================================
-// ===== Search ===============================================
+// ===== Search (translation-aware, diacritic-insensitive) ====
 // ============================================================
-async function ensureBookLoaded(bookName) {
-    if (bibleCache[bookName]) return bibleCache[bookName];
+async function ensureBookLoaded(bookName, translationId) {
+    const tId = translationId || currentTranslation;
+    if (!bibleCache[tId]) bibleCache[tId] = {};
+    if (bibleCache[tId][bookName]) return bibleCache[tId][bookName];
+
     const file = BOOKS[bookName].file;
-    const res = await fetch(`./data/${file}.json`);
+    const url = dataUrl(tId, file);
+    const res = await fetch(url);
     if (!res.ok) throw new Error(`Failed to load ${bookName}`);
     const data = await res.json();
-    bibleCache[bookName] = data;
+    bibleCache[tId][bookName] = data;
     return data;
 }
 
@@ -1051,8 +1227,8 @@ async function loadAllBooks(onProgress) {
     let done = 0;
     const total = BOOK_NAMES.length;
     for (const book of BOOK_NAMES) {
-        if (!bibleCache[book]) {
-            try { await ensureBookLoaded(book); }
+        if (!bibleCache[currentTranslation]?.[book]) {
+            try { await ensureBookLoaded(book, currentTranslation); }
             catch (err) { console.warn(`Skipping ${book}:`, err.message); }
         }
         done++;
@@ -1063,12 +1239,30 @@ async function loadAllBooks(onProgress) {
 
 function highlightMatches(text, query) {
     const safe = escapeHtml(text);
-    const re = new RegExp(`(${escapeRegex(query)})`, 'gi');
-    return safe.replace(re, '<mark>$1</mark>');
+    // Case + diacritic-insensitive match
+    const normalizedQuery = normalizeForSearch(query);
+    // We match on normalized but highlight on original — use a character-by-character
+    // walk to find matches without losing diacritics in the output.
+    const normalizedText = normalizeForSearch(safe);
+    let result = '';
+    let i = 0;
+    while (i < safe.length) {
+        if (
+            i + query.length <= safe.length &&
+            normalizedText.substring(i, i + normalizedQuery.length) === normalizedQuery
+        ) {
+            result += '<mark>' + safe.substring(i, i + query.length) + '</mark>';
+            i += query.length;
+        } else {
+            result += safe[i];
+            i++;
+        }
+    }
+    return result;
 }
 
 function performSearch(query) {
-    const q = query.trim().toLowerCase();
+    const q = normalizeForSearch(query.trim());
     if (q.length < 2) {
         searchList.innerHTML = '<p class="search-progress">Type at least 2 characters.</p>';
         searchStatus.textContent = 'Search';
@@ -1077,14 +1271,16 @@ function performSearch(query) {
     const results = [];
     const MAX_RESULTS = 300;
 
+    const cache = bibleCache[currentTranslation] || {};
+
     outer:
     for (const book of BOOK_NAMES) {
-        const bookData = bibleCache[book];
+        const bookData = cache[book];
         if (!bookData) continue;
         for (const chNum of Object.keys(bookData)) {
             const verses = bookData[chNum];
             for (let i = 0; i < verses.length; i++) {
-                if (verses[i].toLowerCase().includes(q)) {
+                if (normalizeForSearch(verses[i]).includes(q)) {
                     results.push({ book, chapter: parseInt(chNum), verse: i + 1, text: verses[i] });
                     if (results.length >= MAX_RESULTS) break outer;
                 }
@@ -1100,8 +1296,9 @@ function renderResults(results, query, truncated) {
         searchList.innerHTML = '<p class="search-progress">Try a different word or phrase.</p>';
         return;
     }
+    const t = getCurrentTranslation();
     searchStatus.textContent =
-        `${results.length}${truncated ? '+' : ''} result${results.length === 1 ? '' : 's'} for “${query}”`;
+        `${results.length}${truncated ? '+' : ''} result${results.length === 1 ? '' : 's'} for “${query}” in ${t.label}`;
 
     searchList.innerHTML = results.map(r => `
     <button class="result-item" type="button"
@@ -1155,10 +1352,11 @@ async function runSearch() {
     searchResults.classList.remove('hidden');
 
     if (!allBooksLoaded) {
-        searchStatus.textContent = 'Loading Bible…';
-        searchList.innerHTML = '<p class="search-progress">First search downloads all 66 books (~4.5 MB). One-time only.</p>';
+        const t = getCurrentTranslation();
+        searchStatus.textContent = `Loading ${t.label}…`;
+        searchList.innerHTML = `<p class="search-progress">First search downloads all 66 books for ${t.label}. One-time only.</p>`;
         await loadAllBooks((done, total) => {
-            searchList.innerHTML = `<p class="search-progress">Loading Bible… ${done} / ${total} books</p>`;
+            searchList.innerHTML = `<p class="search-progress">Loading… ${done} / ${total} books</p>`;
         });
     }
     performSearch(q);
@@ -1211,7 +1409,7 @@ homeShareBtn.addEventListener('click', async () => {
     const url = `${window.location.origin}${window.location.pathname}`;
     const shareData = {
         title: 'Oneness Bible',
-        text: 'One with The Word — a beautiful, offline Bible reader.',
+        text: 'One with The Word — a beautiful, offline Bible reader in English, Yoruba, Igbo, and Hausa.',
         url
     };
 

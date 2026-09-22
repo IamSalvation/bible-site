@@ -5,7 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Oneness Bible — One with The Word</title>
-    <meta name="description" content="Read the King James Version Bible offline. Beautiful, distraction-free, private.">
+    <meta name="description"
+        content="Read the Bible in English (KJV), Yoruba, Igbo, and Hausa — offline, beautifully, and for free.">
 
     <!-- PWA -->
     <link rel="manifest" href="./manifest.json">
@@ -67,7 +68,7 @@
                 </button>
             </div>
 
-            <!-- Offline Download Card -->
+            <!-- Offline Download Card (translation picker) -->
             <div class="home-card" id="offlineCard">
                 <div class="card-label">
                     <i data-lucide="download-cloud"></i>
@@ -77,11 +78,31 @@
                 <!-- Not-downloaded state -->
                 <div id="offlinePrompt" class="offline-state">
                     <p class="offline-desc">
-                        Download the entire Bible so you can read anywhere — no internet needed.
+                        Choose translations to download for offline reading. Each is ~4.5 MB.
                     </p>
+
+                    <div class="translation-checkboxes">
+                        <label class="translation-check">
+                            <input type="checkbox" value="kjv" checked>
+                            <span>KJV <em>King James Version</em></span>
+                        </label>
+                        <label class="translation-check">
+                            <input type="checkbox" value="yoruba">
+                            <span>Yoruba <em>Bíbélì Mímọ́</em></span>
+                        </label>
+                        <label class="translation-check">
+                            <input type="checkbox" value="igbo">
+                            <span>Igbo <em>Baịbụl Nsọ</em></span>
+                        </label>
+                        <label class="translation-check">
+                            <input type="checkbox" value="hausa">
+                            <span>Hausa <em>Litafi Mai Tsarki</em></span>
+                        </label>
+                    </div>
+
                     <button type="button" id="downloadAllBtn" class="btn-primary home-full-btn">
                         <i data-lucide="download"></i>
-                        <span>Download all · ~4.5 MB</span>
+                        <span id="downloadBtnLabel">Download selected</span>
                     </button>
                 </div>
 
@@ -100,13 +121,13 @@
                 <div id="offlineComplete" class="offline-state hidden">
                     <p class="offline-desc">
                         <i data-lucide="check-circle-2"></i>
-                        <span>All 66 books available offline</span>
+                        <span id="offlineCompleteText">All books available offline</span>
                     </p>
                     <div class="offline-meta">
-                        <span class="offline-meta-text">Downloaded · ~4.5 MB</span>
-                        <button type="button" id="redownloadBtn" class="link-btn" title="Re-download offline Bible">
+                        <span class="offline-meta-text" id="offlineMetaText">Downloaded · ~4.5 MB</span>
+                        <button type="button" id="redownloadBtn" class="link-btn" title="Manage offline downloads">
                             <i data-lucide="refresh-cw"></i>
-                            <span>Refresh</span>
+                            <span>Manage</span>
                         </button>
                     </div>
                 </div>
@@ -162,7 +183,7 @@
                         <span>Install App</span>
                     </button>
                 </div>
-                <div class="home-version">Oneness Bible · v1.0</div>
+                <div class="home-version">Oneness Bible · v1.1</div>
             </div>
 
         </div>
@@ -191,14 +212,14 @@
         </div>
 
         <div class="search-bar">
-            <input type="search" id="searchInput" placeholder="Search the Bible… (e.g. love, grace, born again)"
-                autocomplete="off">
+            <input type="search" id="searchInput" placeholder="Search the Bible…" autocomplete="off">
             <button id="clearSearchBtn" title="Clear" type="button" aria-label="Clear search">
                 <i data-lucide="x"></i>
             </button>
         </div>
 
         <nav class="controls">
+            <select id="translationSelect" class="translation-select"></select>
             <select id="bookSelect"></select>
             <select id="chapterSelect"></select>
             <button id="prevBtn" type="button">
@@ -217,7 +238,7 @@
     </main>
 
     <footer class="app-footer hidden" id="readerFooter">
-        <p>King James Version · Public Domain</p>
+        <p>King James Version · Bíbélì Mímọ́ · Baịbụl Nsọ · Litafi Mai Tsarki</p>
     </footer>
 
     <!-- ============================================================
@@ -348,8 +369,20 @@
             </div>
 
             <div class="about-section">
-                <h3>Scripture</h3>
-                <p>King James Version (KJV) · Public Domain</p>
+                <h3>Translations</h3>
+                <p><strong>King James Version (KJV)</strong><br>Public Domain</p>
+                <p><strong>Bíbélì Mímọ́ (Yoruba)</strong><br>Biblica® Open Yoruba Contemporary Bible™<br>Copyright ©
+                    2009, 2017 by Biblica, Inc.®<br>Used by permission. All rights reserved worldwide.<br><a
+                        href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener">CC BY-SA
+                        4.0</a></p>
+                <p><strong>Baịbụl Nsọ (Igbo)</strong><br>Biblica® Open Igbo Contemporary Bible™<br>Copyright © 2020 by
+                    Biblica, Inc.®<br>Used by permission. All rights reserved worldwide.<br><a
+                        href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener">CC BY-SA
+                        4.0</a></p>
+                <p><strong>Litafi Mai Tsarki (Hausa)</strong><br>Biblica® Open Hausa Contemporary Bible™<br>Copyright ©
+                    2020 by Biblica, Inc.®<br>Used by permission. All rights reserved worldwide.<br><a
+                        href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener">CC BY-SA
+                        4.0</a></p>
             </div>
 
             <div class="about-section">
@@ -360,13 +393,12 @@
 
             <div class="about-section">
                 <h3>Works Offline</h3>
-                <p>Once chapters are cached, you can read without an internet connection — perfect for flights,
-                    commutes, or quiet time.</p>
+                <p>Download any translation for offline reading — perfect for flights, commutes, or quiet time.</p>
             </div>
 
             <div class="about-section">
                 <h3>Version</h3>
-                <p>v1.0 · <a href="https://github.com/iamSalvation/bible-site" target="_blank" rel="noopener">View on
+                <p>v1.1 · <a href="https://github.com/iamSalvation/bible-site" target="_blank" rel="noopener">View on
                         GitHub</a></p>
             </div>
         </div>
@@ -388,8 +420,6 @@
 
     <!-- ============================================================
        SERVICE WORKER REGISTRATION
-       Registered here (not in app.js) so PWABuilder's scanner
-       detects it immediately on page load.
        ============================================================ -->
     <script>
         if ('serviceWorker' in navigator) {
