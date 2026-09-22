@@ -190,10 +190,12 @@
     </div>
 
     <!-- ============================================================
-       READER
+       READER — 2 rows: Row 1 (logo + icons), Row 2 (search + controls)
        ============================================================ -->
     <header id="readerHeader" class="hidden">
-        <div class="header-top">
+
+        <!-- Row 1: Logo + Icons -->
+        <div class="header-row header-row-1" id="headerRow1">
             <button type="button" class="brand-link" id="homeBtn" title="Back to home">
                 <img src="./icons/logo.png" alt="" class="brand-logo">
                 <span class="brand-name">Oneness <span class="bible">BIBLE</span></span>
@@ -211,26 +213,26 @@
             </button>
         </div>
 
-        <div class="search-bar">
-            <input type="search" id="searchInput" placeholder="Search the Bible…" autocomplete="off">
-            <button id="clearSearchBtn" title="Clear" type="button" aria-label="Clear search">
-                <i data-lucide="x"></i>
-            </button>
-        </div>
-
-        <nav class="controls">
+        <!-- Row 2: Search + Translation + Book + Chapter + Prev + Next -->
+        <div class="header-row header-row-2" id="headerRow2">
+            <div class="search-inline">
+                <i data-lucide="search" class="search-icon"></i>
+                <input type="search" id="searchInput" placeholder="Search…" autocomplete="off">
+                <button id="clearSearchBtn" title="Clear" type="button" aria-label="Clear search">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
             <select id="translationSelect" class="translation-select"></select>
             <select id="bookSelect"></select>
             <select id="chapterSelect"></select>
-            <button id="prevBtn" type="button">
+            <button id="prevBtn" type="button" class="nav-btn" title="Previous chapter" aria-label="Previous chapter">
                 <i data-lucide="chevron-left"></i>
-                <span>Prev</span>
             </button>
-            <button id="nextBtn" type="button">
-                <span>Next</span>
+            <button id="nextBtn" type="button" class="nav-btn" title="Next chapter" aria-label="Next chapter">
                 <i data-lucide="chevron-right"></i>
             </button>
-        </nav>
+        </div>
+
     </header>
 
     <main id="reader" class="hidden">
@@ -398,7 +400,7 @@
 
             <div class="about-section">
                 <h3>Version</h3>
-                <p>v1.1 · <a href="https://github.com/iamSalvation/bible-site" target="_blank" rel="noopener">View on
+                <p>v1.2 · <a href="https://github.com/iamSalvation/bible-site" target="_blank" rel="noopener">View on
                         GitHub</a></p>
             </div>
         </div>

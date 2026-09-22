@@ -14,7 +14,7 @@ function refreshLucideIcons() {
 // ============================================================
 // ===== Constants ============================================
 // ============================================================
-const APP_VERSION = '1.1';
+const APP_VERSION = '1.2';
 const SETTINGS_KEY = 'readerSettings';
 const ANNOTATIONS_KEY = 'annotations';
 const STATS_KEY = 'readingStats';
@@ -44,7 +44,7 @@ const TRANSLATIONS = {
         id: 'kjv',
         label: 'KJV',
         fullName: 'King James Version',
-        folder: '',              // KJV lives at data/*.json (root)
+        folder: '',
         copyright: 'Public Domain'
     },
     yoruba: {
@@ -156,6 +156,10 @@ const readerHeader = $('readerHeader');
 const readerMain = $('reader');
 const readerFooter = $('readerFooter');
 
+// Header rows (for auto-hide)
+const headerRow1 = $('headerRow1');
+const headerRow2 = $('headerRow2');
+
 const votdText = $('votdText');
 const votdRef = $('votdRef');
 const votdReadBtn = $('votdReadBtn');
@@ -240,11 +244,8 @@ let currentChapter = parseInt(localStorage.getItem('chapter')) || 3;
 let currentTranslation = localStorage.getItem(TRANSLATION_KEY) || 'kjv';
 if (!TRANSLATIONS[currentTranslation]) currentTranslation = 'kjv';
 
-// Cache is keyed by translation → book → chapter data
-// Bible cache: { kjv: { John: {...} }, yoruba: { John: {...} }, ... }
 const bibleCache = {};
-
-let allBooksLoaded = false;  // per-translation flag reset on switch
+let allBooksLoaded = false;
 
 let annotations = JSON.parse(localStorage.getItem(ANNOTATIONS_KEY) || '{}');
 
@@ -291,14 +292,12 @@ function slugifyBook(name) {
 
 // ------------------------------------------------------------
 // Diacritic-insensitive search normalization.
-// Yoruba/Igbo/Hausa use diacritics and subdots. Users rarely
-// type them. This strips them for comparison.
 // ------------------------------------------------------------
 function normalizeForSearch(text) {
     return text
         .toLowerCase()
         .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')   // strip combining marks
+        .replace(/[\u0300-\u036f]/g, '')
         .replace(/ọ/g, 'o')
         .replace(/ẹ/g, 'e')
         .replace(/ṣ/g, 's')
@@ -330,15 +329,99 @@ function getCurrentTranslation() {
     return TRANSLATIONS[currentTranslation];
 }
 
-// Build the data URL for a given translation + book file
-// KJV:     ./data/john.json
-// Yoruba:  ./data/yoruba/john.json
 function dataUrl(translationId, bookFile) {
     const t = TRANSLATIONS[translationId];
     if (!t) return `./data/${bookFile}.json`;
     if (t.folder) return `./data/${t.folder}/${bookFile}.json`;
     return `./data/${bookFile}.json`;
 }
+
+// ============================================================
+// ===== Auto-hide header =====================================
+// ============================================================
+// Behavior:
+//   - At top (scrollY < 50)      → both rows visible
+//   - Scroll down (past 80px)    → both rows hide
+//   - Scroll up (mid-page)       → only Row 2 shows
+//   - Scroll up to top           → both rows show
+//   - Search/dropdown focused    → rows stay visible
+// ============================================================
+let lastScrollY = 0;
+let headerState = 'both';   // 'both' | 'row2' | 'hidden'
+let scrollTicking = false;
+
+function updateHeaderVisibility() {
+    // Only applies when reader is active
+    if (homeScreen && !homeScreen.classList.contains('hidden')) return;
+    if (readerHeader.classList.contains('hidden')) return;
+
+    const y = window.scrollY;
+    const goingDown = y > lastScrollY + 5;
+    const goingUp = y < lastScrollY - 5;
+    const atTop = y < 50;
+
+    // Don't hide while user is typing or dropdown focused
+    const active = document.activeElement;
+    const inputFocused = active && (
+        active.id === 'searchInput' ||
+        active.tagName === 'SELECT'
+    );
+
+    let desired;
+
+    if (atTop) {
+        desired = 'both';
+    } else if (inputFocused) {
+        desired = 'both';   // keep everything visible while interacting
+    } else if (goingDown) {
+        desired = 'hidden';
+    } else if (goingUp) {
+        // Mid-page scroll up → Row 2 only
+        desired = 'row2';
+    } else {
+        // No significant movement — keep current
+        desired = headerState;
+    }
+
+    // Apply state
+    if (desired !== headerState) {
+        setHeaderState(desired);
+        headerState = desired;
+    }
+
+    lastScrollY = y;
+}
+
+function setHeaderState(state) {
+    if (!headerRow1 || !headerRow2) return;
+
+    if (state === 'both') {
+        headerRow1.classList.remove('hidden-row');
+        headerRow2.classList.remove('hidden-row');
+    } else if (state === 'row2') {
+        headerRow1.classList.add('hidden-row');
+        headerRow2.classList.remove('hidden-row');
+    } else if (state === 'hidden') {
+        headerRow1.classList.add('hidden-row');
+        headerRow2.classList.add('hidden-row');
+    }
+}
+
+function resetHeaderState() {
+    headerState = 'both';
+    lastScrollY = window.scrollY;
+    setHeaderState('both');
+}
+
+// Attach scroll listener
+window.addEventListener('scroll', () => {
+    if (scrollTicking) return;
+    scrollTicking = true;
+    requestAnimationFrame(() => {
+        updateHeaderVisibility();
+        scrollTicking = false;
+    });
+}, { passive: true });
 
 // ============================================================
 // ===== Panel management =====================================
@@ -375,6 +458,7 @@ function showReader() {
     readerHeader.classList.remove('hidden');
     readerMain.classList.remove('hidden');
     readerFooter.classList.remove('hidden');
+    resetHeaderState();
     refreshLucideIcons();
 }
 
@@ -491,7 +575,6 @@ function updateDownloadButtonLabel() {
     }
     downloadAllBtn.disabled = false;
 
-    const booksTotal = selected.length * BOOK_NAMES.length;
     const sizeMb = (selected.length * 4.5).toFixed(1);
     downloadBtnLabel.textContent = `Download ${selected.length} translation${selected.length === 1 ? '' : 's'} · ~${sizeMb} MB`;
 }
@@ -521,13 +604,11 @@ async function downloadSelectedTranslations() {
                 const res = await fetch(url, { cache: 'no-store' });
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-                // Add to service worker cache explicitly
                 if ('caches' in window) {
-                    const cache = await caches.open('bible-kjv-v12');
+                    const cache = await caches.open('bible-kjv-v13');
                     await cache.put(url, res.clone());
                 }
 
-                // Warm the in-memory cache
                 if (!bibleCache[tId]) bibleCache[tId] = {};
                 if (!bibleCache[tId][book]) {
                     const data = await res.json();
@@ -606,13 +687,11 @@ function renderOfflineCard() {
         offlinePrompt.classList.remove('hidden');
         offlineLabel.textContent = 'Offline Reading';
 
-        // Pre-check the current translation
         const checkboxes = offlinePrompt.querySelectorAll('input[type="checkbox"]');
         checkboxes.forEach(cb => {
             cb.checked = (cb.value === currentTranslation);
         });
 
-        // Wire change listeners (once)
         if (!renderOfflineCard._wired) {
             checkboxes.forEach(cb => cb.addEventListener('change', updateDownloadButtonLabel));
             renderOfflineCard._wired = true;
@@ -626,7 +705,6 @@ function renderOfflineCard() {
 
 downloadAllBtn.addEventListener('click', downloadSelectedTranslations);
 redownloadBtn.addEventListener('click', () => {
-    // Let the user pick translations again
     localStorage.removeItem(OFFLINE_STATE_KEY);
     renderOfflineCard();
 });
@@ -779,13 +857,9 @@ translationSelect.addEventListener('change', async e => {
     currentTranslation = e.target.value;
     localStorage.setItem(TRANSLATION_KEY, currentTranslation);
 
-    // Reset per-translation search flag
     allBooksLoaded = false;
-
-    // Update continue card on home if visible
     updateContinueCard();
 
-    // If the reader is visible, reload current chapter seamlessly
     if (!homeScreen.classList.contains('hidden')) return;
     await loadChapter(currentBook, currentChapter);
 
@@ -808,7 +882,6 @@ async function loadChapter(book, chapter) {
     }
 
     try {
-        // Ensure per-translation cache exists
         if (!bibleCache[currentTranslation]) bibleCache[currentTranslation] = {};
         let bookData = bibleCache[currentTranslation][book];
 
@@ -858,6 +931,10 @@ async function loadChapter(book, chapter) {
         updateHash(book, chapter);
         trackChapterRead(book, chapter);
 
+        // === Instant scroll to top on every chapter change ===
+        window.scrollTo({ top: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
+        resetHeaderState();
+
     } catch (err) {
         console.error(err);
         readerMain.innerHTML = `<p class="error">Failed to load: ${err.message}</p>`;
@@ -877,7 +954,7 @@ function goPrev() {
     }
     currentBook = bk; currentChapter = ch;
     bookSelect.value = bk; fillChapters(bk); chapterSelect.value = ch;
-    loadChapter(bk, ch).then(() => window.scrollTo({ top: 0, behavior: 'smooth' }));
+    loadChapter(bk, ch);
 }
 
 function goNext() {
@@ -890,7 +967,7 @@ function goNext() {
     }
     currentBook = bk; currentChapter = ch;
     bookSelect.value = bk; fillChapters(bk); chapterSelect.value = ch;
-    loadChapter(bk, ch).then(() => window.scrollTo({ top: 0, behavior: 'smooth' }));
+    loadChapter(bk, ch);
 }
 
 // ============================================================
@@ -1115,7 +1192,6 @@ function renderBookmarks() {
     }
 
     bookmarksList.innerHTML = entries.map(({ key, book, chapter, verse, ann }) => {
-        // Try to find the verse text in the current translation's cache
         let text = '';
         const cache = bibleCache[currentTranslation] || {};
         if (cache[book] && cache[book][String(chapter)]) {
@@ -1206,7 +1282,7 @@ document.addEventListener('click', e => {
 });
 
 // ============================================================
-// ===== Search (translation-aware, diacritic-insensitive) ====
+// ===== Search ===============================================
 // ============================================================
 async function ensureBookLoaded(bookName, translationId) {
     const tId = translationId || currentTranslation;
@@ -1239,10 +1315,7 @@ async function loadAllBooks(onProgress) {
 
 function highlightMatches(text, query) {
     const safe = escapeHtml(text);
-    // Case + diacritic-insensitive match
     const normalizedQuery = normalizeForSearch(query);
-    // We match on normalized but highlight on original — use a character-by-character
-    // walk to find matches without losing diacritics in the output.
     const normalizedText = normalizeForSearch(safe);
     let result = '';
     let i = 0;
@@ -1467,7 +1540,7 @@ homeInstallBtn.addEventListener('click', () => {
     } else if (window.matchMedia('(display-mode: standalone)').matches) {
         showToast('Already installed');
     } else {
-        showToast('Use Share → Add to Home Screen');
+        showToast('Share → Add to Home Screen');
     }
 });
 
@@ -1504,7 +1577,6 @@ homeInstallBtn.addEventListener('click', () => {
 
 // ============================================================
 // ===== Service Worker: listen for controller takeover =======
-// (Registration now lives in index.html)
 // ============================================================
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.addEventListener('controllerchange', () => {

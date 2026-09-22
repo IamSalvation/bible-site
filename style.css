@@ -35,6 +35,10 @@
     --radius-sm: 6px;
     --radius-md: 10px;
     --radius-lg: 14px;
+
+    /* Header height (used for sticky offset) */
+    --header-row-1-height: 52px;
+    --header-row-2-height: 48px;
 }
 
 [data-theme="dark"] {
@@ -107,29 +111,82 @@ body {
 }
 
 /* ============================================================
-   Header
+   Reader Header — 2 rows
    ============================================================ */
 header {
-    padding: 0.9rem 1rem;
-    border-bottom: 1px solid var(--border);
-    background: var(--bg-elevated);
     position: sticky;
     top: 0;
     z-index: 10;
+    background: var(--bg-elevated);
+    border-bottom: 1px solid var(--border);
     backdrop-filter: blur(10px);
+    overflow: hidden;
+    /* Smooth height changes when rows hide/show */
+    transition: box-shadow 0.2s ease;
 }
 
 header.hidden {
     display: none;
 }
 
-.header-top {
+/* Header rows */
+.header-row {
     display: flex;
     align-items: center;
-    gap: 0.4rem;
-    margin-bottom: 0.75rem;
+    padding: 0 1rem;
+    transition: transform 0.25s ease, opacity 0.2s ease;
 }
 
+/* Row 1: logo + icons */
+.header-row-1 {
+    height: var(--header-row-1-height);
+    gap: 0.4rem;
+    border-bottom: 1px solid var(--border);
+}
+
+/* Row 2: search + controls */
+.header-row-2 {
+    min-height: var(--header-row-2-height);
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+/* When rows are hidden, slide them up out of view */
+.header-row-1.hidden-row {
+    transform: translateY(-100%);
+    opacity: 0;
+    pointer-events: none;
+    /* Collapse the height */
+    height: 0 !important;
+    min-height: 0 !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    border-bottom: none;
+    overflow: hidden;
+}
+
+.header-row-2.hidden-row {
+    transform: translateY(-100%);
+    opacity: 0;
+    pointer-events: none;
+    min-height: 0 !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    overflow: hidden;
+}
+
+/* Reduced motion — instant toggle */
+@media (prefers-reduced-motion: reduce) {
+    .header-row {
+        transition: none;
+    }
+}
+
+/* ============================================================
+   Row 1 — Logo + Icons
+   ============================================================ */
 .brand-link {
     display: flex;
     align-items: center;
@@ -155,8 +212,8 @@ header.hidden {
 }
 
 .brand-logo {
-    width: 32px;
-    height: 32px;
+    width: 28px;
+    height: 28px;
     object-fit: contain;
     display: block;
 }
@@ -164,7 +221,7 @@ header.hidden {
 .brand-name {
     font-family: var(--ui-font);
     font-weight: 700;
-    font-size: 1.15rem;
+    font-size: 1.05rem;
     color: var(--navy);
     letter-spacing: -0.01em;
 }
@@ -186,8 +243,8 @@ header.hidden {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 40px;
-    height: 40px;
+    width: 38px;
+    height: 38px;
     padding: 0;
     border: none;
     background: transparent;
@@ -214,42 +271,61 @@ header.hidden {
 }
 
 /* ============================================================
-   Search bar
+   Row 2 — Search + Controls (all in one row, wraps on mobile)
    ============================================================ */
-.search-bar {
-    display: flex;
-    margin-bottom: 0.75rem;
-    position: relative;
-}
 
-.search-bar input {
-    flex: 1;
-    font-family: inherit;
-    font-size: 0.95rem;
-    padding: 0.6rem 2.5rem 0.6rem 0.9rem;
-    border: 1.5px solid var(--border);
-    border-radius: var(--radius-md);
+/* Compact inline search */
+.search-inline {
+    flex: 1 1 180px;
+    min-width: 120px;
+    position: relative;
+    display: flex;
+    align-items: center;
     background: var(--bg);
-    color: var(--text);
-    outline: none;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 0 0.5rem 0 2rem;
     transition: border-color 0.15s, box-shadow 0.15s;
 }
 
-.search-bar input:focus {
+.search-inline:focus-within {
     border-color: var(--navy);
     box-shadow: 0 0 0 3px rgba(26, 58, 122, 0.1);
 }
 
-[data-theme="dark"] .search-bar input:focus {
+[data-theme="dark"] .search-inline:focus-within {
     border-color: var(--gold);
     box-shadow: 0 0 0 3px rgba(230, 168, 32, 0.12);
 }
 
-.search-bar button {
+.search-inline .search-icon {
     position: absolute;
-    right: 0.5rem;
+    left: 0.55rem;
     top: 50%;
     transform: translateY(-50%);
+    width: 15px;
+    height: 15px;
+    color: var(--muted);
+    pointer-events: none;
+}
+
+.search-inline input {
+    flex: 1;
+    font-family: inherit;
+    font-size: 0.88rem;
+    padding: 0.45rem 0;
+    border: none;
+    background: transparent;
+    color: var(--text);
+    outline: none;
+    min-width: 0;
+}
+
+.search-inline input::placeholder {
+    color: var(--muted);
+}
+
+.search-inline button {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -257,40 +333,27 @@ header.hidden {
     border: none;
     color: var(--muted);
     cursor: pointer;
-    padding: 0.35rem 0.5rem;
+    padding: 0.2rem 0.25rem;
     border-radius: var(--radius-sm);
     transition: color 0.15s, background 0.15s;
+    flex-shrink: 0;
 }
 
-.search-bar button .lucide {
-    width: 16px;
-    height: 16px;
+.search-inline button .lucide {
+    width: 14px;
+    height: 14px;
 }
 
-.search-bar button:hover {
+.search-inline button:hover {
     color: var(--accent);
-    background: rgba(26, 58, 122, 0.06);
 }
 
-[data-theme="dark"] .search-bar button:hover {
-    background: rgba(230, 168, 32, 0.1);
-}
-
-/* ============================================================
-   Controls (translation + book + chapter + nav)
-   ============================================================ */
-.controls {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    align-items: center;
-}
-
+/* Selects and buttons inside Row 2 */
 select,
 button {
     font-family: inherit;
-    font-size: 0.9rem;
-    padding: 0.5rem 0.8rem;
+    font-size: 0.85rem;
+    padding: 0.45rem 0.7rem;
     border: 1.5px solid var(--border);
     border-radius: var(--radius-sm);
     background: var(--bg);
@@ -335,19 +398,25 @@ button:hover {
     color: var(--gold);
 }
 
-#prevBtn,
-#nextBtn {
+/* Icon-only Prev/Next buttons */
+.nav-btn {
     display: inline-flex;
     align-items: center;
-    gap: 0.35rem;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    flex-shrink: 0;
 }
 
-#prevBtn .lucide,
-#nextBtn .lucide {
-    width: 14px;
-    height: 14px;
+.nav-btn .lucide {
+    width: 16px;
+    height: 16px;
 }
 
+/* ============================================================
+   Button variants
+   ============================================================ */
 .btn-primary {
     display: inline-flex;
     align-items: center;
@@ -1683,8 +1752,8 @@ footer.app-footer.hidden {
     }
 
     .brand-logo {
-        width: 28px;
-        height: 28px;
+        width: 26px;
+        height: 26px;
     }
 
     .verse.bookmarked::before {
@@ -1709,8 +1778,8 @@ footer.app-footer.hidden {
     }
 
     .icon-btn {
-        width: 36px;
-        height: 36px;
+        width: 34px;
+        height: 34px;
     }
 
     .icon-btn .lucide {
@@ -1718,8 +1787,26 @@ footer.app-footer.hidden {
         height: 18px;
     }
 
+    .header-row {
+        padding: 0 0.75rem;
+    }
+
+    .search-inline {
+        flex-basis: 100%;
+    }
+
+    select {
+        font-size: 0.82rem;
+        padding: 0.42rem 0.6rem;
+    }
+
     .translation-select {
         font-size: 0.82rem;
-        padding: 0.45rem 0.6rem;
+        padding: 0.42rem 0.6rem;
+    }
+
+    .nav-btn {
+        width: 34px;
+        height: 34px;
     }
 }
