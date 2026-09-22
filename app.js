@@ -2,9 +2,6 @@
 // ===== ONENESS BIBLE — app.js ===============================
 // ============================================================
 
-// ============================================================
-// ===== Lucide icon helper ===================================
-// ============================================================
 function refreshLucideIcons() {
     if (window.lucide && typeof window.lucide.createIcons === 'function') {
         window.lucide.createIcons();
@@ -71,6 +68,84 @@ const TRANSLATIONS = {
 };
 
 const TRANSLATION_IDS = Object.keys(TRANSLATIONS);
+
+// Short labels for the collapsed translation select
+const TRANSLATION_SHORT = {
+    kjv: 'KJV',
+    yoruba: 'Yor',
+    igbo: 'Igbo',
+    hausa: 'Haus'
+};
+
+// Standard Bible book abbreviations
+const BOOK_ABBREV = {
+    "Genesis": "Gen",
+    "Exodus": "Exo",
+    "Leviticus": "Lev",
+    "Numbers": "Num",
+    "Deuteronomy": "Deut",
+    "Joshua": "Josh",
+    "Judges": "Judg",
+    "Ruth": "Ruth",
+    "1 Samuel": "1 Sam",
+    "2 Samuel": "2 Sam",
+    "1 Kings": "1 Kgs",
+    "2 Kings": "2 Kgs",
+    "1 Chronicles": "1 Chr",
+    "2 Chronicles": "2 Chr",
+    "Ezra": "Ezra",
+    "Nehemiah": "Neh",
+    "Esther": "Esth",
+    "Job": "Job",
+    "Psalms": "Ps",
+    "Proverbs": "Prov",
+    "Ecclesiastes": "Eccl",
+    "Song of Solomon": "Song",
+    "Isaiah": "Isa",
+    "Jeremiah": "Jer",
+    "Lamentations": "Lam",
+    "Ezekiel": "Ezek",
+    "Daniel": "Dan",
+    "Hosea": "Hos",
+    "Joel": "Joel",
+    "Amos": "Amos",
+    "Obadiah": "Obad",
+    "Jonah": "Jonah",
+    "Micah": "Mic",
+    "Nahum": "Nah",
+    "Habakkuk": "Hab",
+    "Zephaniah": "Zeph",
+    "Haggai": "Hag",
+    "Zechariah": "Zech",
+    "Malachi": "Mal",
+    "Matthew": "Matt",
+    "Mark": "Mark",
+    "Luke": "Luke",
+    "John": "John",
+    "Acts": "Acts",
+    "Romans": "Rom",
+    "1 Corinthians": "1 Cor",
+    "2 Corinthians": "2 Cor",
+    "Galatians": "Gal",
+    "Ephesians": "Eph",
+    "Philippians": "Phil",
+    "Colossians": "Col",
+    "1 Thessalonians": "1 Thess",
+    "2 Thessalonians": "2 Thess",
+    "1 Timothy": "1 Tim",
+    "2 Timothy": "2 Tim",
+    "Titus": "Titus",
+    "Philemon": "Phlm",
+    "Hebrews": "Heb",
+    "James": "Jas",
+    "1 Peter": "1 Pet",
+    "2 Peter": "2 Pet",
+    "1 John": "1 John",
+    "2 John": "2 John",
+    "3 John": "3 John",
+    "Jude": "Jude",
+    "Revelation": "Rev"
+};
 
 // ============================================================
 // ===== Book registry ========================================
@@ -156,7 +231,6 @@ const readerHeader = $('readerHeader');
 const readerMain = $('reader');
 const readerFooter = $('readerFooter');
 
-// Header rows (for auto-hide)
 const headerRow1 = $('headerRow1');
 const headerRow2 = $('headerRow2');
 
@@ -176,7 +250,6 @@ const homeAboutBtn = $('homeAboutBtn');
 const homeShareBtn = $('homeShareBtn');
 const homeInstallBtn = $('homeInstallBtn');
 
-// Offline download
 const offlinePrompt = $('offlinePrompt');
 const offlineProgress = $('offlineProgress');
 const offlineComplete = $('offlineComplete');
@@ -290,9 +363,6 @@ function slugifyBook(name) {
     return name.toLowerCase().replace(/\s+/g, '-');
 }
 
-// ------------------------------------------------------------
-// Diacritic-insensitive search normalization.
-// ------------------------------------------------------------
 function normalizeForSearch(text) {
     return text
         .toLowerCase()
@@ -337,60 +407,26 @@ function dataUrl(translationId, bookFile) {
 }
 
 // ============================================================
+// ===== Search placeholder (mobile vs desktop) ===============
+// ============================================================
+let lastIsMobile = null;
+
+function updateSearchPlaceholder() {
+    const isMobile = window.matchMedia('(max-width: 767px)').matches;
+    if (isMobile === lastIsMobile) return;
+    lastIsMobile = isMobile;
+    if (searchInput) {
+        searchInput.placeholder = isMobile ? 'Search…' : 'Search the Bible…';
+    }
+}
+
+// ============================================================
 // ===== Auto-hide header =====================================
 // ============================================================
-// Behavior:
-//   - At top (scrollY < 50)      → both rows visible
-//   - Scroll down (past 80px)    → both rows hide
-//   - Scroll up (mid-page)       → only Row 2 shows
-//   - Scroll up to top           → both rows show
-//   - Search/dropdown focused    → rows stay visible
-// ============================================================
 let lastScrollY = 0;
-let headerState = 'both';   // 'both' | 'row2' | 'hidden'
+let headerState = 'both';
 let scrollTicking = false;
-
-function updateHeaderVisibility() {
-    // Only applies when reader is active
-    if (homeScreen && !homeScreen.classList.contains('hidden')) return;
-    if (readerHeader.classList.contains('hidden')) return;
-
-    const y = window.scrollY;
-    const goingDown = y > lastScrollY + 5;
-    const goingUp = y < lastScrollY - 5;
-    const atTop = y < 50;
-
-    // Don't hide while user is typing or dropdown focused
-    const active = document.activeElement;
-    const inputFocused = active && (
-        active.id === 'searchInput' ||
-        active.tagName === 'SELECT'
-    );
-
-    let desired;
-
-    if (atTop) {
-        desired = 'both';
-    } else if (inputFocused) {
-        desired = 'both';   // keep everything visible while interacting
-    } else if (goingDown) {
-        desired = 'hidden';
-    } else if (goingUp) {
-        // Mid-page scroll up → Row 2 only
-        desired = 'row2';
-    } else {
-        // No significant movement — keep current
-        desired = headerState;
-    }
-
-    // Apply state
-    if (desired !== headerState) {
-        setHeaderState(desired);
-        headerState = desired;
-    }
-
-    lastScrollY = y;
-}
+let userScrollIntent = false;
 
 function setHeaderState(state) {
     if (!headerRow1 || !headerRow2) return;
@@ -398,10 +434,12 @@ function setHeaderState(state) {
     if (state === 'both') {
         headerRow1.classList.remove('hidden-row');
         headerRow2.classList.remove('hidden-row');
-    } else if (state === 'row2') {
+    }
+    if (state === 'row2') {
         headerRow1.classList.add('hidden-row');
         headerRow2.classList.remove('hidden-row');
-    } else if (state === 'hidden') {
+    }
+    if (state === 'hidden') {
         headerRow1.classList.add('hidden-row');
         headerRow2.classList.add('hidden-row');
     }
@@ -409,19 +447,99 @@ function setHeaderState(state) {
 
 function resetHeaderState() {
     headerState = 'both';
+    userScrollIntent = false;
     lastScrollY = window.scrollY;
     setHeaderState('both');
 }
 
-// Attach scroll listener
+function readerIsActive() {
+    return (
+        readerHeader &&
+        !readerHeader.classList.contains('hidden') &&
+        homeScreen &&
+        homeScreen.classList.contains('hidden')
+    );
+}
+
+window.addEventListener('wheel', () => {
+    if (!readerIsActive()) return;
+    userScrollIntent = true;
+}, { passive: true });
+
+window.addEventListener('touchmove', () => {
+    if (!readerIsActive()) return;
+    userScrollIntent = true;
+}, { passive: true });
+
+window.addEventListener('keydown', (event) => {
+    if (!readerIsActive()) return;
+    const scrollKeys = ['ArrowDown', 'ArrowUp', 'PageDown', 'PageUp', 'Home', 'End', ' '];
+    if (scrollKeys.includes(event.key)) {
+        userScrollIntent = true;
+    }
+}, { passive: true });
+
 window.addEventListener('scroll', () => {
     if (scrollTicking) return;
     scrollTicking = true;
+
     requestAnimationFrame(() => {
-        updateHeaderVisibility();
+        if (!readerIsActive()) {
+            scrollTicking = false;
+            return;
+        }
+
+        const y = window.scrollY;
+
+        if (!userScrollIntent) {
+            lastScrollY = y;
+            if (headerState !== 'both') {
+                headerState = 'both';
+                setHeaderState('both');
+            }
+            scrollTicking = false;
+            return;
+        }
+
+        if (y <= 60) {
+            headerState = 'both';
+            setHeaderState('both');
+            userScrollIntent = false;
+            lastScrollY = y;
+            scrollTicking = false;
+            return;
+        }
+
+        const delta = y - lastScrollY;
+        if (Math.abs(delta) < 8) {
+            lastScrollY = y;
+            scrollTicking = false;
+            return;
+        }
+
+        if (delta > 0) {
+            if (headerState !== 'hidden') {
+                headerState = 'hidden';
+                setHeaderState('hidden');
+            }
+        } else if (delta < 0) {
+            if (headerState !== 'row2') {
+                headerState = 'row2';
+                setHeaderState('row2');
+            }
+        }
+
+        lastScrollY = y;
         scrollTicking = false;
     });
 }, { passive: true });
+
+window.addEventListener('load', () => {
+    resetHeaderState();
+    updateSearchPlaceholder();
+});
+
+window.addEventListener('resize', updateSearchPlaceholder);
 
 // ============================================================
 // ===== Panel management =====================================
@@ -559,7 +677,7 @@ votdRefreshBtn.addEventListener('click', () => {
 });
 
 // ============================================================
-// ===== Offline download (multi-translation) =================
+// ===== Offline download =====================================
 // ============================================================
 function getSelectedTranslationsToDownload() {
     const checked = offlinePrompt.querySelectorAll('input[type="checkbox"]:checked');
@@ -574,7 +692,6 @@ function updateDownloadButtonLabel() {
         return;
     }
     downloadAllBtn.disabled = false;
-
     const sizeMb = (selected.length * 4.5).toFixed(1);
     downloadBtnLabel.textContent = `Download ${selected.length} translation${selected.length === 1 ? '' : 's'} · ~${sizeMb} MB`;
 }
@@ -605,7 +722,7 @@ async function downloadSelectedTranslations() {
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
                 if ('caches' in window) {
-                    const cache = await caches.open('bible-kjv-v13');
+                    const cache = await caches.open('bible-kjv-v18');
                     await cache.put(url, res.clone());
                 }
 
@@ -650,7 +767,6 @@ async function downloadSelectedTranslations() {
 
     downloadAllBtn.disabled = false;
     redownloadBtn.disabled = false;
-
     renderOfflineCard();
 }
 
@@ -826,7 +942,8 @@ const nextBtn = document.getElementById('nextBtn');
 BOOK_NAMES.forEach(book => {
     const opt = document.createElement('option');
     opt.value = book;
-    opt.textContent = book;
+    opt.textContent = BOOK_ABBREV[book] || book;
+    opt.title = book;
     bookSelect.appendChild(opt);
 });
 
@@ -836,19 +953,18 @@ function fillChapters(book) {
     for (let i = 1; i <= count; i++) {
         const opt = document.createElement('option');
         opt.value = i;
-        opt.textContent = `Chapter ${i}`;
+        opt.textContent = i;
+        opt.title = `Chapter ${i}`;
         chapterSelect.appendChild(opt);
     }
 }
 
-// ------------------------------------------------------------
-// Translation dropdown
-// ------------------------------------------------------------
 TRANSLATION_IDS.forEach(id => {
     const t = TRANSLATIONS[id];
     const opt = document.createElement('option');
     opt.value = id;
-    opt.textContent = `${t.label} — ${t.fullName}`;
+    opt.textContent = TRANSLATION_SHORT[id] || t.label;
+    opt.title = `${t.label} — ${t.fullName}`;
     translationSelect.appendChild(opt);
 });
 translationSelect.value = currentTranslation;
@@ -931,8 +1047,7 @@ async function loadChapter(book, chapter) {
         updateHash(book, chapter);
         trackChapterRead(book, chapter);
 
-        // === Instant scroll to top on every chapter change ===
-        window.scrollTo({ top: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
+        window.scrollTo({ top: 0, behavior: 'auto' });
         resetHeaderState();
 
     } catch (err) {
@@ -1553,6 +1668,7 @@ homeInstallBtn.addEventListener('click', () => {
 
     applySettings();
     updateStreakOnOpen();
+    updateSearchPlaceholder();
 
     bookSelect.value = currentBook;
     fillChapters(currentBook);
@@ -1575,9 +1691,6 @@ homeInstallBtn.addEventListener('click', () => {
     refreshLucideIcons();
 })();
 
-// ============================================================
-// ===== Service Worker: listen for controller takeover =======
-// ============================================================
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.addEventListener('controllerchange', () => {
         console.log('✅ SW now controlling the page');

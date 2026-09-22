@@ -1,5 +1,5 @@
 // sw.js — Service Worker for offline Bible reading
-const CACHE = 'bible-kjv-v13';
+const CACHE = 'bible-kjv-v18';
 
 const LUCIDE_URL = 'https://unpkg.com/lucide@latest';
 
@@ -23,7 +23,6 @@ self.addEventListener('install', event => {
                 './icons/apple-touch-icon.png',
                 './screenshots/home.png',
                 './screenshots/reader.png'
-                // Lucide CDN intentionally not precached — cached lazily by fetch handler
             ])
         )
     );
@@ -42,8 +41,6 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
     const url = new URL(event.request.url);
 
-    // Bible data — cache-first
-    // Handles both /data/john.json (KJV) and /data/yoruba/john.json (others)
     if (url.pathname.includes('/data/')) {
         event.respondWith(
             caches.match(event.request).then(cached => {
@@ -60,7 +57,6 @@ self.addEventListener('fetch', event => {
         return;
     }
 
-    // Lucide CDN — cache-first
     if (url.href === LUCIDE_URL || url.hostname === 'unpkg.com') {
         event.respondWith(
             caches.match(event.request).then(cached => {
@@ -77,10 +73,8 @@ self.addEventListener('fetch', event => {
         return;
     }
 
-    // Same-origin only
     if (url.origin !== self.location.origin) return;
 
-    // Network-first with cache fallback
     event.respondWith(
         fetch(event.request)
             .then(res => {
@@ -94,9 +88,6 @@ self.addEventListener('fetch', event => {
     );
 });
 
-// ============================================================
-// ===== Message handler (SKIP_WAITING for updates) ==========
-// ============================================================
 self.addEventListener('message', event => {
     if (event.data && event.data.type === 'SKIP_WAITING') {
         self.skipWaiting();
