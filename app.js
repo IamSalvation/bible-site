@@ -382,6 +382,12 @@ function updateSearchPlaceholder() {
 
 // ============================================================
 // ===== Auto-hide header =====================================
+// - Reader opens / refreshes → both rows visible
+// - Initial/browser scroll events → do not hide header
+// - User scrolls down (20px) → both rows hide
+// - User scrolls up (15px)   → Row 2 shows
+// - User returns to top       → both rows show
+// - Small movements accumulate until a threshold is crossed
 // ============================================================
 let lastScrollY = 0;
 let headerState = 'both';
@@ -451,6 +457,7 @@ window.addEventListener('scroll', () => {
 
         const y = window.scrollY;
 
+        // No user scroll intent yet → keep both rows visible
         if (!userScrollIntent) {
             lastScrollY = y;
             if (headerState !== 'both') {
@@ -461,6 +468,7 @@ window.addEventListener('scroll', () => {
             return;
         }
 
+        // Near the top → always show both rows
         if (y <= 60) {
             headerState = 'both';
             setHeaderState('both');
@@ -471,25 +479,31 @@ window.addEventListener('scroll', () => {
         }
 
         const delta = y - lastScrollY;
-        if (Math.abs(delta) < 8) {
+
+        // Scrolling DOWN — threshold 20px
+        if (delta > 20) {
+            if (headerState !== 'hidden') {
+                headerState = 'hidden';
+                setHeaderState('hidden');
+            }
             lastScrollY = y;
             scrollTicking = false;
             return;
         }
 
-        if (delta > 0) {
-            if (headerState !== 'hidden') {
-                headerState = 'hidden';
-                setHeaderState('hidden');
-            }
-        } else if (delta < 0) {
+        // Scrolling UP — threshold 15px
+        if (delta < -15) {
             if (headerState !== 'row2') {
                 headerState = 'row2';
                 setHeaderState('row2');
             }
+            lastScrollY = y;
+            scrollTicking = false;
+            return;
         }
 
-        lastScrollY = y;
+        // Movement was too small → DO NOT update lastScrollY.
+        // This lets small movements accumulate until a threshold is crossed.
         scrollTicking = false;
     });
 }, { passive: true });
