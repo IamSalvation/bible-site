@@ -457,7 +457,6 @@ window.addEventListener('scroll', () => {
 
         const y = window.scrollY;
 
-        // No user scroll intent yet → keep both rows visible
         if (!userScrollIntent) {
             lastScrollY = y;
             if (headerState !== 'both') {
@@ -468,7 +467,6 @@ window.addEventListener('scroll', () => {
             return;
         }
 
-        // Near the top → always show both rows
         if (y <= 60) {
             headerState = 'both';
             setHeaderState('both');
@@ -480,7 +478,6 @@ window.addEventListener('scroll', () => {
 
         const delta = y - lastScrollY;
 
-        // Scrolling DOWN — threshold 20px
         if (delta > 20) {
             if (headerState !== 'hidden') {
                 headerState = 'hidden';
@@ -491,7 +488,6 @@ window.addEventListener('scroll', () => {
             return;
         }
 
-        // Scrolling UP — threshold 15px
         if (delta < -15) {
             if (headerState !== 'row2') {
                 headerState = 'row2';
@@ -502,8 +498,6 @@ window.addEventListener('scroll', () => {
             return;
         }
 
-        // Movement was too small → DO NOT update lastScrollY.
-        // This lets small movements accumulate until a threshold is crossed.
         scrollTicking = false;
     });
 }, { passive: true });
@@ -696,7 +690,7 @@ async function downloadSelectedTranslations() {
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
                 if ('caches' in window) {
-                    const cache = await caches.open('bible-kjv-v19');
+                    const cache = await caches.open('bible-kjv-v20');
                     await cache.put(url, res.clone());
                 }
 
