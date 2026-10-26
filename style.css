@@ -1,5 +1,5 @@
-/* ============================================================
-   ONENESS BIBLE — Brand Palette
+﻿/* ============================================================
+   ONENESS BIBLE â€” Brand Palette
    ============================================================ */
 :root {
     --navy: #1a3a7a;
@@ -231,7 +231,7 @@ body {
 /* ============================================================
    Lucide icon base
    ============================================================ */
-.lucide {
+.icon {
     display: inline-block;
     vertical-align: middle;
     flex-shrink: 0;
@@ -241,13 +241,9 @@ body {
     color: currentColor;
 }
 
-.icon-sun {
-    display: none !important;
-}
+.icon-sun { display: none !important; }
 
-.icon-moon {
-    display: inline-block;
-}
+.icon-moon { display: inline-block; }
 
 [data-theme="dark"] .icon-sun {
     display: inline-block !important;
@@ -258,7 +254,7 @@ body {
 }
 
 /* ============================================================
-   Reader Header — 2 rows
+   Reader Header â€” 2 rows
    ============================================================ */
 header {
     padding: 0;
@@ -333,7 +329,7 @@ header.hidden {
 }
 
 /* ============================================================
-   Row 1 — Logo + Icons
+   Row 1 â€” Logo + Icons
    ============================================================ */
 .brand-link {
     display: flex;
@@ -403,7 +399,7 @@ header.hidden {
     font-family: inherit;
 }
 
-.icon-btn .lucide {
+.icon-btn .icon {
     width: 20px;
     height: 20px;
 }
@@ -419,7 +415,7 @@ header.hidden {
 }
 
 /* ============================================================
-   Row 2 — Search + Controls
+   Row 2 â€” Search + Controls
    ============================================================ */
 .search-inline {
     flex: 1 1 auto;
@@ -486,7 +482,7 @@ header.hidden {
     flex-shrink: 0;
 }
 
-.search-inline button .lucide {
+.search-inline button .icon {
     width: 13px;
     height: 13px;
 }
@@ -562,7 +558,7 @@ button:hover {
     max-width: 32px;
 }
 
-.nav-btn .lucide {
+.nav-btn .icon {
     width: 15px;
     height: 15px;
 }
@@ -622,7 +618,7 @@ button:hover {
 }
 
 .btn-primary .lucide,
-.btn-secondary .lucide {
+.btn-secondary .icon {
     color: currentColor;
 }
 
@@ -790,7 +786,7 @@ main#reader.hidden {
     gap: 0.4rem;
 }
 
-.card-label .lucide {
+.card-label .icon {
     width: 16px;
     height: 16px;
     color: var(--gold);
@@ -831,7 +827,7 @@ main#reader.hidden {
     padding: 0.4rem 0.75rem;
 }
 
-.votd-actions .lucide {
+.votd-actions .icon {
     width: 14px;
     height: 14px;
 }
@@ -879,14 +875,14 @@ main#reader.hidden {
     gap: 0.4rem;
 }
 
-.offline-desc .lucide {
+.offline-desc .icon {
     color: #2e7d32;
     width: 18px;
     height: 18px;
     flex-shrink: 0;
 }
 
-[data-theme="dark"] .offline-desc .lucide {
+[data-theme="dark"] .offline-desc .icon {
     color: #81c784;
 }
 
@@ -1020,7 +1016,7 @@ main#reader.hidden {
     background: rgba(230, 168, 32, 0.1);
 }
 
-.link-btn .lucide {
+.link-btn .icon {
     width: 13px;
     height: 13px;
 }
@@ -1087,7 +1083,7 @@ main#reader.hidden {
     gap: 0.5rem;
 }
 
-.home-actions .lucide {
+.home-actions .icon {
     width: 18px;
     height: 18px;
 }
@@ -1122,7 +1118,7 @@ main#reader.hidden {
     max-width: none;
 }
 
-.home-footer-links button .lucide {
+.home-footer-links button .icon {
     width: 14px;
     height: 14px;
 }
@@ -1242,7 +1238,7 @@ footer.app-footer.hidden {
 #closeSearchBtn .lucide,
 #closeBookmarksBtn .lucide,
 #closeSettingsBtn .lucide,
-#closeAboutBtn .lucide {
+#closeAboutBtn .icon {
     width: 14px;
     height: 14px;
 }
@@ -1365,7 +1361,7 @@ footer.app-footer.hidden {
 }
 
 .verse.bookmarked::before {
-    content: "🔖";
+    content: "ðŸ”–";
     position: absolute;
     left: -1.3rem;
     top: 0.2rem;
@@ -1407,7 +1403,7 @@ footer.app-footer.hidden {
     max-width: none;
 }
 
-.vt-btn .lucide {
+.vt-btn .icon {
     width: 18px;
     height: 18px;
 }
@@ -1539,7 +1535,7 @@ footer.app-footer.hidden {
 
 .bookmarks-header .lucide,
 .settings-header .lucide,
-.about-header .lucide {
+.about-header .icon {
     width: 18px;
     height: 18px;
     color: var(--gold);
@@ -1891,7 +1887,7 @@ footer.app-footer.hidden {
 }
 
 /* ============================================================
-   Responsive — mobile tweaks
+   Responsive â€” mobile tweaks
    ============================================================ */
 @media (max-width: 500px) {
     main#reader {
@@ -1950,7 +1946,7 @@ footer.app-footer.hidden {
         height: 34px;
     }
 
-    .icon-btn .lucide {
+    .icon-btn .icon {
         width: 18px;
         height: 18px;
     }
@@ -1999,7 +1995,7 @@ footer.app-footer.hidden {
         max-width: 26px;
     }
 
-    .nav-btn .lucide {
+    .nav-btn .icon {
         width: 12px;
         height: 12px;
     }

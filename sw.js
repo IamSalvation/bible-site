@@ -1,7 +1,5 @@
-// sw.js — Service Worker for offline Bible reading
-const CACHE = 'bible-kjv-v20';
-
-const LUCIDE_URL = 'https://unpkg.com/lucide@latest';
+﻿// sw.js â€” Service Worker for offline Bible reading
+const CACHE = 'bible-kjv-v21';
 
 self.addEventListener('install', event => {
     event.waitUntil(
@@ -57,21 +55,7 @@ self.addEventListener('fetch', event => {
         return;
     }
 
-    if (url.href === LUCIDE_URL || url.hostname === 'unpkg.com') {
-        event.respondWith(
-            caches.match(event.request).then(cached => {
-                if (cached) return cached;
-                return fetch(event.request).then(res => {
-                    if (res.ok) {
-                        const copy = res.clone();
-                        caches.open(CACHE).then(cache => cache.put(event.request, copy));
-                    }
-                    return res;
-                });
-            })
-        );
-        return;
-    }
+    
 
     if (url.origin !== self.location.origin) return;
 
