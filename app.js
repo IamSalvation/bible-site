@@ -1,5 +1,5 @@
-﻿// ============================================================
-// ===== ONENESS BIBLE â€” app.js ===============================
+// ============================================================
+// ===== ONENESS BIBLE — app.js ===============================
 // ============================================================
 
 // ============================================================
@@ -50,12 +50,6 @@
     });
 })();
 
-function refreshLucideIcons() {
-    if (window.lucide && typeof window.lucide.createIcons === 'function') {
-        window.lucide.createIcons();
-    }
-}
-
 // ============================================================
 // ===== Constants ============================================
 // ============================================================
@@ -83,9 +77,9 @@ const FONT_FAMILIES = {
 
 const TRANSLATIONS = {
     kjv: { id: 'kjv', label: 'KJV', fullName: 'King James Version', folder: '', copyright: 'Public Domain' },
-    yoruba: { id: 'yoruba', label: 'Yoruba', fullName: 'BÃ­bÃ©lÃ¬ MÃ­má»Ì', folder: 'yoruba', copyright: 'BiblicaÂ® Open Yoruba Contemporary Bibleâ„¢ Â· CC BY-SA 4.0' },
-    igbo: { id: 'igbo', label: 'Igbo', fullName: 'Baá»‹bá»¥l Nsá»', folder: 'igbo', copyright: 'BiblicaÂ® Open Igbo Contemporary Bibleâ„¢ Â· CC BY-SA 4.0' },
-    hausa: { id: 'hausa', label: 'Hausa', fullName: 'Litafi Mai Tsarki', folder: 'hausa', copyright: 'BiblicaÂ® Open Hausa Contemporary Bibleâ„¢ Â· CC BY-SA 4.0' }
+    yoruba: { id: 'yoruba', label: 'Yoruba', fullName: 'Bíbélì Mímọ́', folder: 'yoruba', copyright: 'Biblica® Open Yoruba Contemporary Bible™ · CC BY-SA 4.0' },
+    igbo: { id: 'igbo', label: 'Igbo', fullName: 'Baịbụl Nsọ', folder: 'igbo', copyright: 'Biblica® Open Igbo Contemporary Bible™ · CC BY-SA 4.0' },
+    hausa: { id: 'hausa', label: 'Hausa', fullName: 'Litafi Mai Tsarki', folder: 'hausa', copyright: 'Biblica® Open Hausa Contemporary Bible™ · CC BY-SA 4.0' }
 };
 
 const TRANSLATION_IDS = Object.keys(TRANSLATIONS);
@@ -328,16 +322,16 @@ function normalizeForSearch(text) {
         .toLowerCase()
         .normalize('NFD')
         .replace(/[\u0300-\u036f]/g, '')
-        .replace(/á»/g, 'o')
-        .replace(/áº¹/g, 'e')
-        .replace(/á¹£/g, 's')
-        .replace(/á»¥/g, 'u')
-        .replace(/á»‹/g, 'i')
-        .replace(/á¹…/g, 'n')
-        .replace(/Å„/g, 'n')
-        .replace(/É“/g, 'b')
-        .replace(/É—/g, 'd')
-        .replace(/Æ™/g, 'k');
+        .replace(/ọ/g, 'o')
+        .replace(/ẹ/g, 'e')
+        .replace(/ṣ/g, 's')
+        .replace(/ụ/g, 'u')
+        .replace(/ị/g, 'i')
+        .replace(/ṅ/g, 'n')
+        .replace(/ń/g, 'n')
+        .replace(/ɓ/g, 'b')
+        .replace(/ɗ/g, 'd')
+        .replace(/ƙ/g, 'k');
 }
 
 function showToast(msg, ms = 1800) {
@@ -376,17 +370,17 @@ function updateSearchPlaceholder() {
     if (isMobile === lastIsMobile) return;
     lastIsMobile = isMobile;
     if (searchInput) {
-        searchInput.placeholder = isMobile ? 'Searchâ€¦' : 'Search the Bibleâ€¦';
+        searchInput.placeholder = isMobile ? 'Search…' : 'Search the Bible…';
     }
 }
 
 // ============================================================
 // ===== Auto-hide header =====================================
-// - Reader opens / refreshes â†’ both rows visible
-// - Initial/browser scroll events â†’ do not hide header
-// - User scrolls down (20px) â†’ both rows hide
-// - User scrolls up (15px)   â†’ Row 2 shows
-// - User returns to top       â†’ both rows show
+// - Reader opens / refreshes → both rows visible
+// - Initial/browser scroll events → do not hide header
+// - User scrolls down (20px) → both rows hide
+// - User scrolls up (15px)   → Row 2 shows
+// - User returns to top       → both rows show
 // - Small movements accumulate until a threshold is crossed
 // ============================================================
 let lastScrollY = 0;
@@ -536,7 +530,6 @@ function showHome() {
     updateContinueCard();
     renderVotd();
     renderOfflineCard();
-    
 }
 
 function showReader() {
@@ -545,7 +538,6 @@ function showReader() {
     readerMain.classList.remove('hidden');
     readerFooter.classList.remove('hidden');
     resetHeaderState();
-    
 }
 
 // ============================================================
@@ -620,7 +612,7 @@ async function renderVotd() {
 
     if (!list.length) {
         votdText.textContent = '"The Lord is my shepherd; I shall not want."';
-        votdRef.textContent = 'â€” Psalm 23:1 (KJV)';
+        votdRef.textContent = '— Psalm 23:1 (KJV)';
         return;
     }
 
@@ -630,7 +622,7 @@ async function renderVotd() {
 
     const v = list[idx];
     votdText.textContent = `"${v.text}"`;
-    votdRef.textContent = `â€” ${v.book} ${v.chapter}:${v.verse} (KJV)`;
+    votdRef.textContent = `— ${v.book} ${v.chapter}:${v.verse} (KJV)`;
 
     votdReadBtn.onclick = () => {
         jumpToVerse(v.book, v.chapter, v.verse);
@@ -661,7 +653,7 @@ function updateDownloadButtonLabel() {
     }
     downloadAllBtn.disabled = false;
     const sizeMb = (selected.length * 4.5).toFixed(1);
-    downloadBtnLabel.textContent = `Download ${selected.length} translation${selected.length === 1 ? '' : 's'} Â· ~${sizeMb} MB`;
+    downloadBtnLabel.textContent = `Download ${selected.length} translation${selected.length === 1 ? '' : 's'} · ~${sizeMb} MB`;
 }
 
 async function downloadSelectedTranslations() {
@@ -675,7 +667,7 @@ async function downloadSelectedTranslations() {
     offlineComplete.classList.add('hidden');
     offlineProgress.classList.remove('hidden');
 
-    offlineLabel.textContent = 'Downloadingâ€¦';
+    offlineLabel.textContent = 'Downloading…';
 
     const totalSteps = selected.length * BOOK_NAMES.length;
     let done = 0;
@@ -706,7 +698,7 @@ async function downloadSelectedTranslations() {
 
             done++;
             const percent = Math.round((done / totalSteps) * 100);
-            offlineProgressText.textContent = `Downloadingâ€¦ ${done} / ${totalSteps}`;
+            offlineProgressText.textContent = `Downloading… ${done} / ${totalSteps}`;
             offlineProgressFill.style.width = `${percent}%`;
             offlineProgressPercent.textContent = `${percent}%`;
 
@@ -726,10 +718,10 @@ async function downloadSelectedTranslations() {
 
     if (success) {
         offlineComplete.classList.remove('hidden');
-        showToast(`âœ… ${selected.length} translation${selected.length === 1 ? '' : 's'} available offline`);
+        showToast(`✅ ${selected.length} translation${selected.length === 1 ? '' : 's'} available offline`);
     } else {
         offlinePrompt.classList.remove('hidden');
-        showToast(`âš ï¸ ${failures.length} books failed â€” try again`);
+        showToast(`⚠️ ${failures.length} books failed — try again`);
         updateDownloadButtonLabel();
     }
 
@@ -765,7 +757,7 @@ function renderOfflineCard() {
                 year: 'numeric'
             });
             const sizeMb = (downloaded.length * 4.5).toFixed(1);
-            offlineMetaText.textContent = `Downloaded ${dateStr} Â· ~${sizeMb} MB`;
+            offlineMetaText.textContent = `Downloaded ${dateStr} · ~${sizeMb} MB`;
         }
     } else {
         offlinePrompt.classList.remove('hidden');
@@ -783,8 +775,6 @@ function renderOfflineCard() {
 
         updateDownloadButtonLabel();
     }
-
-    
 }
 
 downloadAllBtn.addEventListener('click', downloadSelectedTranslations);
@@ -932,7 +922,7 @@ TRANSLATION_IDS.forEach(id => {
     const opt = document.createElement('option');
     opt.value = id;
     opt.textContent = TRANSLATION_SHORT[id] || t.label;
-    opt.title = `${t.label} â€” ${t.fullName}`;
+    opt.title = `${t.label} — ${t.fullName}`;
     translationSelect.appendChild(opt);
 });
 translationSelect.value = currentTranslation;
@@ -954,7 +944,7 @@ translationSelect.addEventListener('change', async e => {
 // ===== Load a chapter =======================================
 // ============================================================
 async function loadChapter(book, chapter) {
-    readerMain.innerHTML = '<p class="loading">Loadingâ€¦</p>';
+    readerMain.innerHTML = '<p class="loading">Loading…</p>';
     hideVerseToolbar();
     selectedVerseEl = null;
     selectedVerseKey = null;
@@ -1076,7 +1066,6 @@ themeBtn.addEventListener('click', () => {
     const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
     document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
     localStorage.setItem('theme', isDark ? 'light' : 'dark');
-    
 });
 
 // ============================================================
@@ -1165,7 +1154,7 @@ vtCopy.addEventListener('click', async () => {
     const text = clone.textContent.trim();
 
     const t = getCurrentTranslation();
-    const formatted = `${book} ${chapter}:${verse} â€” ${text} (${t.label})`;
+    const formatted = `${book} ${chapter}:${verse} — ${text} (${t.label})`;
 
     try {
         await navigator.clipboard.writeText(formatted);
@@ -1280,7 +1269,7 @@ function renderBookmarks() {
         if (cache[book] && cache[book][String(chapter)]) {
             text = cache[book][String(chapter)][verse - 1] || '';
         }
-        if (text.length > 120) text = text.slice(0, 120) + 'â€¦';
+        if (text.length > 120) text = text.slice(0, 120) + '…';
 
         const colorBg = ann.color
             ? ({
@@ -1454,7 +1443,7 @@ function renderResults(results, query, truncated) {
     }
     const t = getCurrentTranslation();
     searchStatus.textContent =
-        `${results.length}${truncated ? '+' : ''} result${results.length === 1 ? '' : 's'} for â€œ${query}â€ in ${t.label}`;
+        `${results.length}${truncated ? '+' : ''} result${results.length === 1 ? '' : 's'} for “${query}” in ${t.label}`;
 
     searchList.innerHTML = results.map(r => `
     <button class="result-item" type="button"
@@ -1509,10 +1498,10 @@ async function runSearch() {
 
     if (!allBooksLoaded) {
         const t = getCurrentTranslation();
-        searchStatus.textContent = `Loading ${t.label}â€¦`;
+        searchStatus.textContent = `Loading ${t.label}…`;
         searchList.innerHTML = `<p class="search-progress">First search downloads all 66 books for ${t.label}. One-time only.</p>`;
         await loadAllBooks((done, total) => {
-            searchList.innerHTML = `<p class="search-progress">Loadingâ€¦ ${done} / ${total} books</p>`;
+            searchList.innerHTML = `<p class="search-progress">Loading… ${done} / ${total} books</p>`;
         });
     }
     performSearch(q);
@@ -1565,7 +1554,7 @@ homeShareBtn.addEventListener('click', async () => {
     const url = `${window.location.origin}${window.location.pathname}`;
     const shareData = {
         title: 'Oneness Bible',
-        text: 'One with The Word â€” a beautiful, offline Bible reader in English, Yoruba, Igbo, and Hausa.',
+        text: 'One with The Word — a beautiful, offline Bible reader in English, Yoruba, Igbo, and Hausa.',
         url
     };
 
@@ -1603,12 +1592,12 @@ window.addEventListener('beforeinstallprompt', e => {
 installAcceptBtn.addEventListener('click', async () => {
     installBanner.classList.add('hidden');
     if (!deferredInstallPrompt) {
-        showToast('Use Share â†’ Add to Home Screen');
+        showToast('Use Share → Add to Home Screen');
         return;
     }
     deferredInstallPrompt.prompt();
     const { outcome } = await deferredInstallPrompt.userChoice;
-    if (outcome === 'accepted') showToast('Installingâ€¦');
+    if (outcome === 'accepted') showToast('Installing…');
     deferredInstallPrompt = null;
 });
 
@@ -1623,7 +1612,7 @@ homeInstallBtn.addEventListener('click', () => {
     } else if (window.matchMedia('(display-mode: standalone)').matches) {
         showToast('Already installed');
     } else {
-        showToast('Share â†’ Add to Home Screen');
+        showToast('Share → Add to Home Screen');
     }
 });
 
@@ -1656,11 +1645,10 @@ homeInstallBtn.addEventListener('click', () => {
 
     updateHomeStats();
     renderOfflineCard();
-    
 })();
 
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.addEventListener('controllerchange', () => {
-        console.log('âœ… SW now controlling the page');
+        console.log('✅ SW now controlling the page');
     });
 }

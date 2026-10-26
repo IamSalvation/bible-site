@@ -1,5 +1,5 @@
-﻿/* ============================================================
-   ONENESS BIBLE â€” Brand Palette
+/* ============================================================
+   ONENESS BIBLE — Brand Palette
    ============================================================ */
 :root {
     --navy: #1a3a7a;
@@ -63,10 +63,6 @@
     padding: 0;
 }
 
-/* ============================================================
-   FIX: use min-height on body (not height: 100%) so sticky
-   positioning works correctly on the header.
-   ============================================================ */
 html {
     height: 100%;
 }
@@ -229,7 +225,7 @@ body {
 }
 
 /* ============================================================
-   Lucide icon base
+   SVG Icon Base
    ============================================================ */
 .icon {
     display: inline-block;
@@ -241,9 +237,13 @@ body {
     color: currentColor;
 }
 
-.icon-sun { display: none !important; }
+.icon-sun {
+    display: none !important;
+}
 
-.icon-moon { display: inline-block; }
+.icon-moon {
+    display: inline-block;
+}
 
 [data-theme="dark"] .icon-sun {
     display: inline-block !important;
@@ -254,7 +254,7 @@ body {
 }
 
 /* ============================================================
-   Reader Header â€” 2 rows
+   Reader Header — 2 rows
    ============================================================ */
 header {
     padding: 0;
@@ -329,7 +329,7 @@ header.hidden {
 }
 
 /* ============================================================
-   Row 1 â€” Logo + Icons
+   Row 1 — Logo + Icons
    ============================================================ */
 .brand-link {
     display: flex;
@@ -415,7 +415,7 @@ header.hidden {
 }
 
 /* ============================================================
-   Row 2 â€” Search + Controls
+   Row 2 — Search + Controls
    ============================================================ */
 .search-inline {
     flex: 1 1 auto;
@@ -617,7 +617,7 @@ button:hover {
     color: var(--gold);
 }
 
-.btn-primary .lucide,
+.btn-primary .icon,
 .btn-secondary .icon {
     color: currentColor;
 }
@@ -1235,9 +1235,9 @@ footer.app-footer.hidden {
     max-width: none;
 }
 
-#closeSearchBtn .lucide,
-#closeBookmarksBtn .lucide,
-#closeSettingsBtn .lucide,
+#closeSearchBtn .icon,
+#closeBookmarksBtn .icon,
+#closeSettingsBtn .icon,
 #closeAboutBtn .icon {
     width: 14px;
     height: 14px;
@@ -1361,7 +1361,7 @@ footer.app-footer.hidden {
 }
 
 .verse.bookmarked::before {
-    content: "ðŸ”–";
+    content: "🔖";
     position: absolute;
     left: -1.3rem;
     top: 0.2rem;
@@ -1533,8 +1533,8 @@ footer.app-footer.hidden {
     gap: 0.5rem;
 }
 
-.bookmarks-header .lucide,
-.settings-header .lucide,
+.bookmarks-header .icon,
+.settings-header .icon,
 .about-header .icon {
     width: 18px;
     height: 18px;
@@ -1887,7 +1887,7 @@ footer.app-footer.hidden {
 }
 
 /* ============================================================
-   Responsive â€” mobile tweaks
+   Responsive — mobile tweaks
    ============================================================ */
 @media (max-width: 500px) {
     main#reader {

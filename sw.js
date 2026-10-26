@@ -1,4 +1,4 @@
-﻿// sw.js â€” Service Worker for offline Bible reading
+// sw.js — Service Worker for offline Bible reading
 const CACHE = 'bible-kjv-v21';
 
 self.addEventListener('install', event => {
@@ -39,6 +39,7 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
     const url = new URL(event.request.url);
 
+    // Bible data - cache first
     if (url.pathname.includes('/data/')) {
         event.respondWith(
             caches.match(event.request).then(cached => {
@@ -55,10 +56,10 @@ self.addEventListener('fetch', event => {
         return;
     }
 
-    
-
+    // Only handle same-origin for everything else
     if (url.origin !== self.location.origin) return;
 
+    // Network-first with cache fallback
     event.respondWith(
         fetch(event.request)
             .then(res => {
